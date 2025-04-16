@@ -1,4 +1,5 @@
 import datetime
+import multiprocessing
 import os
 import time
 
@@ -63,7 +64,6 @@ class Preparer():
             self.inputed_in_nn = 0 #Вводится временно, для тестирования
 
             parameters = manager.dict(parameters)
-            lock = manager.RLock()
 
             before = datetime.datetime.now()
             if 1 < parameters['threads']:
@@ -81,9 +81,9 @@ class Preparer():
                         else:
                             preparing_chunk = files[i * chunk_size:(i + 1) * chunk_size]
 
-                        print(f'Размер: {len(preparing_chunk)}; Чанк: {i}')
+                        #print(f'Размер: {len(preparing_chunk)}; Чанк: {i}')
                         chunks_size += len(preparing_chunk)
-                        process = pool.submit(self.operation_cycle, (parameters, preparing_chunk, i * chunk_size, lock))
+                        process = pool.submit(self.operation_cycle, (parameters, preparing_chunk, i * chunk_size))
                         processes.append(process)
 
                         self.send_message(f'Процесс {i + 1} запущен')
@@ -100,7 +100,7 @@ class Preparer():
                 thread.join()
 
             after = datetime.datetime.now()
-            self.send_message(f'Время: {after - before}')
+            self.send_message(f'Обработка завершена: \nВремя: {after - before} \nЗагружено: ')
 
     def operation_cycle(self, *args):
         """Выполняет операции с изображениями в одной папке. Вызывается при параллельной обработке"""
@@ -108,16 +108,12 @@ class Preparer():
         parameters = args[0][0] #ToDo -  обратить внимание: args всегда оборачивается в tuple, из-за чего применяется [0][0] вместо [0]
         files = args[0][1]
         img_num = args[0][2]
-        if len(args[0]) == 4: # Если обработка параллельная
-            lock = args[0][3]
-        else:
-            lock = None
 
         prepared = 0
         compliancly = 0
-
+        files_num = 0
         for file in files:
-
+            files_num += 1
             if filetype.is_image(os.path.join(parameters['input_dir'], file)):  # проверка файла
                 prepared += 1
                 image = Image.open(os.path.join(parameters['input_dir'], file), 'r')
@@ -126,15 +122,13 @@ class Preparer():
                 image_params['number_multiplicity'] = img_num
 
                 #ToDo: проверить работу self.dirs_files
-                print(self.loaded_images)
+                #print(self.loaded_images)
                 for i, filters in enumerate(parameters['filters']):
 
                     if 'prepared' in list(filters.keys()):
-                        if filters['prepared'] == self.loaded_images[filters['actions']['output_dir']]:  # <= используется для безопасности, на случай если он каким-либо образом увеличит значение
-                            if lock is not None:
-                                with lock:
-                                    parameters['filters'].pop(i)
-                            print(f'Отсечка; {parameters['filters']}')
+                        if filters['prepared'] <= self.loaded_images[filters['actions']['output_dir']]:  # <= используется для безопасности, на случай если он каким-либо образом увеличит значение
+                            parameters['filters'].pop(i)
+                            #print(f'Отсечка; {parameters['filters']}')
                             if len(parameters['filters']) == 0:
                                 print('Фильтры кончились')
                                 return datetime.datetime.now() - self.t1
@@ -176,16 +170,13 @@ class Preparer():
                         if actions['delete']:
                             os.remove(os.path.join(parameters['input_dir'], file))
 
-                        if lock is not None:
-                            with lock:
-                                if 'prepared' in list(filters.keys()):
-                                    self.loaded_images[filters['actions']['output_dir']] += 1
-                        print('Prepared')
+
+                        if 'prepared' in list(filters.keys()):
+                            self.loaded_images[filters['actions']['output_dir']] += 1
                         break
             img_num += 1
-
-
-        return f'Обработано: {prepared} | Img_num: {img_num}'
+        print(self.loaded_images)
+        return {'images': prepared, 'files': files_num}
 
     def get_image_params(self, image: Image, input_dir: str):
         """Получает параметры изображения, возвращает словарь параметров. Добавляет format, name, extension, а также параметры,
@@ -351,7 +342,7 @@ class Preparer():
 if __name__ == '__main__':
     errors = 0
     for i in range(1):
-
+            print(f'{i}:')
             Preparer([{'input_dir': r'par_tests\\test_with_syncman', 'total_images': '', 'sort_type': '', 'threads': 2,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
@@ -388,5 +379,3 @@ if __name__ == '__main__':
                                    'delete': False,
                                    'output_dir': 'par_tests\\st.2'}}
                                            ]}])
-
-    print(f'Ошибок: {errors}')
