@@ -1,8 +1,7 @@
 from tkinter import Tk, Frame, messagebox
 from tkinter.constants import *
-from customtkinter import CTkFrame, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton
+from customtkinter import CTkFrame, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton, CTkProgressBar
 from datetime import datetime
-from program_logic import Preparer
 
 root = Tk()
 
@@ -33,6 +32,7 @@ class Interface():
         pass
 
     def start_preparing(self, params):
+        from program_logic import Preparer
 
         try:
             Preparer(params)
@@ -53,10 +53,14 @@ class MessageWindow():
         self.message_box = CTkTextbox(self.main_frm, border_color=border_color)
         self.message_box.grid()
 
+        self.progress_bar = CTkProgressBar(self.main_frm)# псевдокод
+        self.progress_bar.grid()
     def show_message(self, message: str):
         msg_time = datetime.now()
 
         pass
+    def update_progress(self, value: float):
+        self.progress_bar.set(value)
 
 if __name__ == '__main__':
     Interface()

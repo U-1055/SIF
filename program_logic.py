@@ -13,7 +13,7 @@ from natsort import natsorted
 from multiprocessing import Manager
 
 from prgm_test_image_generator import Test
-from tests import check_chunks
+from tests import check_chunks, check_replace
 
 class Preparer():
     def __init__(self, parameters: list):
@@ -110,7 +110,6 @@ class Preparer():
         img_num = args[0][2]
 
         prepared = 0
-        compliancly = 0
         files_num = 0
         for file in files:
             files_num += 1
@@ -158,21 +157,22 @@ class Preparer():
                             while f'{image_params['name']}.{image_params['extension']}' in self.dirs_files[actions['output_dir']]:  # проверка наличия идентичного имени изображения в папке
                                 image_params['name'] = f'{image_params['name']}({iteration})'
                                 iteration += 1
-
+                            print(image.filename)
                             self.dirs_files[actions['output_dir']].append(f'{image_params['name']}.{image_params['extension']}')
-                            compliancly += 1
+                            before_load = len(os.listdir(actions['output_dir'])) # тест dirs_files
+
                             image.save(
                                 os.path.join(actions['output_dir'],
                                              f'{image_params['name']}.{image_params['extension']}'),
                                 format=image_params['format'])
+
+                            check_replace(actions['output_dir'], before_load) # тест dirs_files
                             image.close()
 
                         if actions['delete']:
                             os.remove(os.path.join(parameters['input_dir'], file))
 
-
-                        if 'prepared' in list(filters.keys()):
-                            self.loaded_images[filters['actions']['output_dir']] += 1
+                        self.loaded_images[filters['actions']['output_dir']] += 1
                         break
             img_num += 1
         print(self.loaded_images)
@@ -334,26 +334,35 @@ class Preparer():
 
         return img_filter
 
-    def send_message(self, message: str):
-        """Передаёт сообщение в интерфейс"""
-        print(message)
+    def send_stat(self):
+        pass
 
+    def update_progress(self, all_images: int, prepared: int):
+        from program_interface import MessageWindow
+        #ToDo: разобраться с импортами
+
+        self.send_message('Ошибка обновления прогресса', 'error')
+
+    def send_message(self, message: str, type: str = 'message'):
+        """Передаёт сообщение в интерфейс. Types: message, warning, error, fatal error."""
+        from program_interface import MessageWindow
+        print(message)
 
 if __name__ == '__main__':
     errors = 0
     for i in range(1):
             print(f'{i}:')
-            Preparer([{'input_dir': r'par_tests\\test_with_syncman', 'total_images': '', 'sort_type': '', 'threads': 2,
+            Preparer([{'input_dir': r'par_tests\\test', 'total_images': '', 'sort_type': '', 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
                           {'format': '',
-                            'size': (((40, '>'), (40, '>')), ),
+                            'size': '',
                             'weight': '',
                             'name': '',
                             'extension': '',
-                            'number_multiplicity': '',
+                            'number_multiplicity': (5,),
                             'content': '',
-                            'prepared': 50,
+                            'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
                                 {'resize': '',
                                  'crop': '',
@@ -361,21 +370,5 @@ if __name__ == '__main__':
                                  'rename': '',
                                  'save': True,
                                  'delete': False,
-                                 'output_dir': 'par_tests\\st.1'}},
-                             {'format': '',
-                              'size': (((40, '<='), (40, '<=')),),
-                              'weight': '',
-                              'name': '',
-                              'extension': '',
-                              'number_multiplicity': '',
-                              'content': '',
-                              'prepared': 75,
-                              'actions':  # -----------------------------------------------------------------------------------
-                                  {'resize': '',
-                                   'crop': '',
-                                   'reformat': '',
-                                   'rename': '',
-                                   'save': True,
-                                   'delete': False,
-                                   'output_dir': 'par_tests\\st.2'}}
+                                 'output_dir': 'par_tests\\st.2'}}
                                            ]}])
