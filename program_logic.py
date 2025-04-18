@@ -12,8 +12,7 @@ from concurrent.futures import ProcessPoolExecutor
 from natsort import natsorted
 from multiprocessing import Manager
 
-from prgm_test_image_generator import Test
-from tests import check_chunks, check_replace
+from tests import check_chunks, check_replace, Test
 
 class Preparer():
     def __init__(self, parameters: list):
@@ -157,10 +156,10 @@ class Preparer():
                             while f'{image_params['name']}.{image_params['extension']}' in self.dirs_files[actions['output_dir']]:  # проверка наличия идентичного имени изображения в папке
                                 image_params['name'] = f'{image_params['name']}({iteration})'
                                 iteration += 1
-                            print(image.filename)
+
                             self.dirs_files[actions['output_dir']].append(f'{image_params['name']}.{image_params['extension']}')
                             before_load = len(os.listdir(actions['output_dir'])) # тест dirs_files
-
+                            print(image_params['extension'])
                             image.save(
                                 os.path.join(actions['output_dir'],
                                              f'{image_params['name']}.{image_params['extension']}'),
@@ -175,7 +174,7 @@ class Preparer():
                         self.loaded_images[filters['actions']['output_dir']] += 1
                         break
             img_num += 1
-        print(self.loaded_images)
+
         return {'images': prepared, 'files': files_num}
 
     def get_image_params(self, image: Image, input_dir: str):
@@ -352,23 +351,24 @@ if __name__ == '__main__':
     errors = 0
     for i in range(1):
             print(f'{i}:')
-            Preparer([{'input_dir': r'par_tests\\test', 'total_images': '', 'sort_type': '', 'threads': 1,
+            Preparer([{'input_dir': r'par_tests\to_ico', 'total_images': '', 'sort_type': '', 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
                           {'format': '',
-                            'size': '',
+                            'size': ((('>', 50 ), ('>', 50)),),
                             'weight': '',
                             'name': '',
                             'extension': '',
-                            'number_multiplicity': (5,),
+                            'number_multiplicity': (2,),
                             'content': '',
                             'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
                                 {'resize': '',
                                  'crop': '',
-                                 'reformat': '',
+                                 'reformat': 'PNG',
                                  'rename': '',
                                  'save': True,
-                                 'delete': False,
-                                 'output_dir': 'par_tests\\st.2'}}
+                                 'delete': True,
+                                 'output_dir': 'par_tests\\from_ico'}}
                                            ]}])
+
