@@ -1,7 +1,11 @@
-from tkinter import Tk, Frame, messagebox
+import time
+from tkinter import Tk, Frame, messagebox, filedialog
 from tkinter.constants import *
-from customtkinter import CTkFrame, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton, CTkProgressBar
+from customtkinter import CTkEntry, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton, CTkProgressBar
 from datetime import datetime
+from threading import Thread
+
+from widgets import EntryButton
 
 root = Tk()
 
@@ -14,54 +18,126 @@ root.title('Система фильтрации изображений')
 frm_color_1 = '#D1D1D1'
 frm_color_2 = '#E1E1E1'
 frm_color_3 = '#A6A2A3'
-btn_color_en = '#EFF1FE'
+btn_color_en = '#3299FF'
 btn_color_dis = '#ABABAB'
 border_color = '#7F7E83'
 
-root_frm = Frame(root, bg=frm_color_1)
-root_frm.pack(fill=BOTH, expand=True)
+title_font = ('Arial', 18)
+common_font = ('Arial', 14)
 
-class Interface():
+root.configure(background=frm_color_1)
+
+root.grid_columnconfigure(index=0, weight=3)
+root.grid_rowconfigure(index=0, weight=4)
+
+
+def preparer_stub():
+    time.sleep(5)
+    return
+
+
+class MainWindow:
+    """Основное окно. Требуется для ввода параметров и запуска обработки."""
     def __init__(self):
-        self.main_frm = Frame(root_frm, bg=frm_color_2)
-        self.main_frm.grid()
+        self.in_progress = 'Выполняется...'
+        self.start = 'Начать обработку'
 
-        self.main_window()
+        self.main_frm = Frame(bg=frm_color_2)
+        self.main_frm.pack(anchor=NW)
 
-    def main_window(self):
-        pass
+        self.main_lbl = CTkLabel(self.main_frm, text='Параметры обработки', font=title_font)
+        self.main_lbl.grid(column=0, row=0, columnspan=6)
 
-    def start_preparing(self, params):
+        main_param_lbl = CTkLabel(self.main_frm, text='Основные параметры')
+        main_param_lbl.grid(row=1, column=0, columnspan=6)
+
+        filters_param_lbl = CTkLabel(self.main_frm, text='Фильтры')
+
+        help_btn = CTkButton(self.main_frm, text='Справка')
+        help_btn.grid(row=6, column=0, columnspan=2, sticky=W + E)
+
+        self.start_btn = CTkButton(self.main_frm, fg_color=btn_color_en, text=self.start, command=self.start_preparing)
+        self.start_btn.grid(row=6, column=4, columnspan=2, sticky=W + E)
+
+        self.prep_time_lbl = CTkLabel(self.main_frm, fg_color=frm_color_3, text='Время обработки:')
+        self.prep_time_lbl.grid(row=6, column=2, columnspan=2, sticky=W + E)
+
+        self.params()
+
+    def params(self):
+        """Размещает виджеты параметров обработки. В словаре params_list ключами являются названия параметров, отображаемых в интерфейсе,
+           значениями - виджеты, принимающие их. """
+
+        params_list = {'Целевая папка:': (EntryButton(self.main_frm, btn_color_en), 'input_dir'),
+                       'Обработать изображения:': (CTkEntry(self.main_frm), 'total_images'),
+                       'Процессы:': (CTkEntry(self.main_frm), 'threads')}
+
+        filters_list = {'Обработать:': (), 'Формат:': (), 'Разрешение:': (),
+                        'Размер:': (), 'Название:': (), 'Расширение:': (), 'Кратность номера:': (),
+                        'Содержание:': (), 'Изменить размер:': (), 'Обрезать:': (),
+                        'Конвертировать:': (), 'Переименовать:': (), 'Загружать в папку:': (),
+                        'Удалять из целевой папки': (), 'Выгрузить в': ()}
+
+        column = 0
+        for key in list(params_list.keys()):
+            label = CTkLabel(self.main_frm, text=key)
+            label.grid(row=2, column=column)
+
+            widget = params_list[key]
+            print(widget)
+            widget.grid(row=2, column=column + 1)
+            column += 2
+
+
+    def start_preparing(self):
+        """Начинает обработку. Импортирует Preparer, меняет параметры кнопки, запускает отсчёт времени выполнения."""
         from program_logic import Preparer
+      #ToDo: время обработки
+      #  try:
+        self.start_btn.configure(text=self.in_progress, state=DISABLED, fg_color=btn_color_dis)
 
-        try:
-            Preparer(params)
-        except:
-            messagebox.showerror('Непредвиденная ошибка обработки', f'Возникла непредвиденная ошибка обработки набора')
+        self.counting = True
+        counting = Thread(target=self.start_countdown)
+        counting.start()
 
-class Validator():
+        #Preparer
+        self.counting = False
+        self.start_btn.configure(text=self.start, state=NORMAL, fg_color=btn_color_en)
+      #  except:
+            #messagebox.showerror('Непредвиденная ошибка обработки', f'Возникла непредвиденная ошибка обработки набора'
+    def start_countdown(self):
+        """Отсчитывает время с момента начал обработки."""
+        while self.counting:
+            self.prep_time_lbl.configure(text=f'Время обработки:{time.time_ns()}')
+
+
+class Validator:
     def __init__(self):
         pass
 
-class MessageWindow():
+
+class MessageWindow:
 
     def __init__(self):
-        self.main_frm = Frame(root_frm, bg=frm_color_2)
-        self.main_frm.grid()
+        self.main_frm = Frame(root, bg=frm_color_2)
+        self.main_frm.pack(anchor=SW)
+        self.widgets()
 
     def widgets(self):
-        self.message_box = CTkTextbox(self.main_frm, border_color=border_color)
-        self.message_box.grid()
+
+        self.message_box = CTkTextbox(self.main_frm, border_color=border_color, state=DISABLED, border_width=5)
+        self.message_box.grid(row=1, column=0, columnspan=2)
 
         self.progress_bar = CTkProgressBar(self.main_frm)# псевдокод
-        self.progress_bar.grid()
-    def show_message(self, message: str):
-        msg_time = datetime.now()
-
-        pass
+        self.progress_bar.grid(row=0)
     def update_progress(self, value: float):
         self.progress_bar.set(value)
 
+class HelpWindow():
+    def __init__(self):
+        pass
+
 if __name__ == '__main__':
-    Interface()
+    MainWindow()
+    MessageWindow()
     root.mainloop()

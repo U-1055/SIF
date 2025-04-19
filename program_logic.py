@@ -14,7 +14,8 @@ from multiprocessing import Manager
 
 from tests import check_chunks, check_replace, Test
 
-class Preparer():
+
+class Preparer:
     def __init__(self, parameters: list):
         self.send_message('Инициализация...')
         self.t1 = datetime.datetime.now()
@@ -351,7 +352,7 @@ if __name__ == '__main__':
     errors = 0
     for i in range(1):
             print(f'{i}:')
-            Preparer([{'input_dir': r'par_tests\to_ico', 'total_images': '', 'sort_type': '', 'threads': 1,
+            Preparer([{'input_dir': r'par_tests\to_ico', 'total_images': '', 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
                           {'format': '',

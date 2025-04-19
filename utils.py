@@ -70,7 +70,10 @@ class CommonUtils():
     def __init__(self):
         pass
 
-testing_utils = TestingUtils()
-testing_utils.generate_images(r"par_tests\test", 1500, source_path=r"C:\Users\filat\Downloads\Flowers.v1i.folder\train\spider lily",
-                              format_name='png')
-testing_utils.generate_different_formats(r'par_tests\test', 200)
+if __name__ == '__main__':
+    testing_utils = TestingUtils()
+    testing_utils.generate_images(r"par_tests\test_images_only", 150,
+                                  source_path=r"C:\Users\filat\Downloads\Flowers.v1i.folder\train\spider lily",
+                                  format_name='png')
+
+    #testing_utils.generate_different_formats(r'par_tests\test', 200)
