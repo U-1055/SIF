@@ -5,7 +5,7 @@ from customtkinter import CTkEntry, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton
 from datetime import datetime
 from threading import Thread
 
-from widgets import EntryButton
+from widgets import EntryButton, NumEntry
 
 root = Tk()
 
@@ -69,8 +69,8 @@ class MainWindow:
            значениями - виджеты, принимающие их. """
 
         params_list = {'Целевая папка:': (EntryButton(self.main_frm, btn_color_en), 'input_dir'),
-                       'Обработать изображения:': (CTkEntry(self.main_frm), 'total_images'),
-                       'Процессы:': (CTkEntry(self.main_frm), 'threads')}
+                       'Обработать изображения:': (NumEntry(self.main_frm), 'total_images'),
+                       'Процессы:': (NumEntry(self.main_frm), 'threads')}
 
         filters_list = {'Обработать:': (), 'Формат:': (), 'Разрешение:': (),
                         'Размер:': (), 'Название:': (), 'Расширение:': (), 'Кратность номера:': (),
@@ -83,7 +83,7 @@ class MainWindow:
             label = CTkLabel(self.main_frm, text=key)
             label.grid(row=2, column=column)
 
-            widget = params_list[key]
+            widget = params_list[key][0]
             print(widget)
             widget.grid(row=2, column=column + 1)
             column += 2

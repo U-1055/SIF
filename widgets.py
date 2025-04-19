@@ -39,8 +39,13 @@ class NumEntry(CTkEntry):
         return self.get()
 
     def validate(self, char): #ToDo: доделать валидацию
-        print(char)
-        if char not in self.allowed_chars:
+
+        if char == '':
+            return True
+        try:
+            int(char)
+            return True
+        except ValueError:
             return False
 
 
