@@ -1,11 +1,11 @@
 import time
-from tkinter import Tk, Frame, messagebox, filedialog
+from tkinter import Tk, Frame, messagebox, ttk
 from tkinter.constants import *
 from customtkinter import CTkEntry, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton, CTkProgressBar
 from datetime import datetime
 from threading import Thread
 
-from widgets import EntryButton, NumEntry
+from widgets import EntryButton, NumEntry, Counter, FromTo
 
 root = Tk()
 
@@ -54,23 +54,23 @@ class MainWindow:
         filters_param_lbl = CTkLabel(self.main_frm, text='Фильтры')
 
         help_btn = CTkButton(self.main_frm, text='Справка')
-        help_btn.grid(row=6, column=0, columnspan=2, sticky=W + E)
+        help_btn.grid(row=8, column=0, columnspan=2, sticky=W + E)
 
         self.start_btn = CTkButton(self.main_frm, fg_color=btn_color_en, text=self.start, command=self.start_preparing)
-        self.start_btn.grid(row=6, column=4, columnspan=2, sticky=W + E)
+        self.start_btn.grid(row=8, column=4, columnspan=2, sticky=W + E)
 
         self.prep_time_lbl = CTkLabel(self.main_frm, fg_color=frm_color_3, text='Время обработки:')
-        self.prep_time_lbl.grid(row=6, column=2, columnspan=2, sticky=W + E)
+        self.prep_time_lbl.grid(row=8, column=2, columnspan=2, sticky=W + E)
 
         self.params()
 
-    def params(self):
+    def params(self): #ToDo: дописать виджеты
         """Размещает виджеты параметров обработки. В словаре params_list ключами являются названия параметров, отображаемых в интерфейсе,
            значениями - виджеты, принимающие их. """
 
-        params_list = {'Целевая папка:': (EntryButton(self.main_frm, btn_color_en), 'input_dir'),
-                       'Обработать изображения:': (NumEntry(self.main_frm), 'total_images'),
-                       'Процессы:': (NumEntry(self.main_frm), 'threads')}
+        params_list = {'Целевая папка:': [EntryButton(self.main_frm, btn_color_en), 'input_dir'],
+                       'Обработать изображения:': [FromTo(self.main_frm), 'total_images'],
+                       'Процессы:': [Counter(self.main_frm, 'readonly', 1, 8), 'threads']}
 
         filters_list = {'Обработать:': (), 'Формат:': (), 'Разрешение:': (),
                         'Размер:': (), 'Название:': (), 'Расширение:': (), 'Кратность номера:': (),
@@ -81,11 +81,22 @@ class MainWindow:
         column = 0
         for key in list(params_list.keys()):
             label = CTkLabel(self.main_frm, text=key)
-            label.grid(row=2, column=column)
+            label.grid(row=2, column=column, sticky=W)
 
             widget = params_list[key][0]
-            print(widget)
-            widget.grid(row=2, column=column + 1)
+            widget.grid(row=2, column=column + 1, sticky=W)
+
+            params_list[key][0] = widget
+            column += 2
+
+        column = 0
+        for i, key in enumerate(list(filters_list.keys())):
+            if column == 6:
+                column = 0
+
+            label = CTkLabel(self.main_frm, text=key)
+            label.grid(row=(i // 3) + 3, column=column, columnspan=2, sticky=W)
+
             column += 2
 
 
@@ -126,7 +137,7 @@ class MessageWindow:
     def widgets(self):
 
         self.message_box = CTkTextbox(self.main_frm, border_color=border_color, state=DISABLED, border_width=5)
-        self.message_box.grid(row=1, column=0, columnspan=2)
+        self.message_box.grid(row=1, column=0, columnspan=2, sticky=W+E)
 
         self.progress_bar = CTkProgressBar(self.main_frm)# псевдокод
         self.progress_bar.grid(row=0)
