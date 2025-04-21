@@ -70,10 +70,11 @@ class MainWindow:
 
         params_list = {'Целевая папка:': [EntryButton(self.main_frm, btn_color_en), 'input_dir'],
                        'Обработать изображения:': [FromTo(self.main_frm), 'total_images'],
-                       'Процессы:': [Counter(self.main_frm, 'readonly', 1, 8), 'threads']}
+                       'Процессы:': [Counter(self.main_frm, state='readonly', from_=1, to=8), 'threads']}
 
-        filters_list = {'Обработать:': (), 'Формат:': (), 'Разрешение:': (),
-                        'Размер:': (), 'Название:': (), 'Расширение:': (), 'Кратность номера:': (),
+        filters_list = {'Обработать:': (), 'Формат:': [ttk.Combobox(self.main_frm, values=['JPEG', 'PNG', 'BMP']),],
+                        'Разрешение:': (),
+                        'Размер:': (), 'Название:': [ttk.Combobox(self.main_frm),], 'Расширение:': [ttk.Combobox(self.main_frm),], 'Кратность номера:': (),
                         'Содержание:': (), 'Изменить размер:': (), 'Обрезать:': (),
                         'Конвертировать:': (), 'Переименовать:': (), 'Загружать в папку:': (),
                         'Удалять из целевой папки': (), 'Выгрузить в': ()}
@@ -84,7 +85,7 @@ class MainWindow:
             label.grid(row=2, column=column, sticky=W)
 
             widget = params_list[key][0]
-            widget.grid(row=2, column=column + 1, sticky=W)
+            widget.grid(row=2, column=column + 1)
 
             params_list[key][0] = widget
             column += 2
@@ -95,7 +96,12 @@ class MainWindow:
                 column = 0
 
             label = CTkLabel(self.main_frm, text=key)
-            label.grid(row=(i // 3) + 3, column=column, columnspan=2, sticky=W)
+            label.grid(row=(i // 3) + 3, column=column, sticky=W)
+
+            if len(filters_list[key]) > 0: # Введено временно, до готовности всех виджетов
+                widget = filters_list[key][0] #ToDo: доделать размещение
+                widget.grid(row=(i // 3) + 3, column=column, sticky=W)
+                filters_list[key][0] = widget
 
             column += 2
 
@@ -149,6 +155,9 @@ class HelpWindow():
         pass
 
 if __name__ == '__main__':
-    MainWindow()
-    MessageWindow()
+    main_window = MainWindow()
+    message_window = MessageWindow()
+
+
+
     root.mainloop()
