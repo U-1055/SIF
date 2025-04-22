@@ -1,7 +1,7 @@
 import tkinter
 from tkinter import Frame, Tk, filedialog, Button, GROOVE, RIDGE, StringVar, ttk, constants, Label
 from customtkinter import CTkEntry
-
+#ToDo: разбраться с явным указанием размеров в виджетах с гридом
 
 def string_validation(char):
     """Функция валидации. Пропускает ТОЛЬКО целые числа >= 0"""
@@ -26,7 +26,7 @@ class EntryButton(Frame):
         self.entry = ttk.Entry(self)
         self.entry.grid(row=0, column=0)
 
-        self.button = ttk.Button(self, text='...', command=self.load_path)
+        self.button = ttk.Button(self, text='...', width=4, command=self.load_path)
         self.button.grid(row=0, column=1)
 
     def load_path(self):
@@ -61,12 +61,12 @@ class NumEntry(CTkEntry):
 class Counter(ttk.Spinbox):
     """ttk.Spinbox с целочисленной валидацией."""
 
-    def __init__(self, master: tkinter.Widget, state: tkinter.constants = constants.NORMAL, from_: float = 0,
-                 to: float = 0):
+    def __init__(self, master: tkinter.Widget, state: tkinter.constants = constants.NORMAL, width: int = 10, from_: int = 0,
+                 to: int = 0):
         text_var = StringVar()
         super().__init__(master=master, textvariable=text_var, validate='key',
                          validatecommand=(master.register(self.validation), '%P'),
-                         from_=from_, to=to, state=state)
+                         from_=from_, to=to, state=state, width=width)
 
     def get(self) -> int:
         return int(self.get())
@@ -88,7 +88,7 @@ class FromTo(Frame):
         to_lbl.grid(column=2, row=0)
 
         self.from_counter = Counter(self, from_=0, to=5000000)
-        self.to_counter = Counter(self, from_=0,
+        self.to_counter = Counter(self, from_=1,
                                   to=500000)  #ToDo: исправить, посмотреть в доке как сделать без to=50000000
 
         self.from_counter.grid(column=1, row=0)
@@ -118,21 +118,78 @@ class ErrorWindow(Label):
     def __init__(self, master):
         super().__init__(master=master)
 
-class NumCombobox(ttk.Combobox):
-    """ttk.Combobox с целочисленной неотрицательной валидацией"""
-    def __init__(self, master: tkinter.Widget):
+class AddableCombobox(Frame):
+    """ttk.Combobox с добавлением пользовательских значений"""
+    def __init__(self, master: tkinter.Widget, val_validate=None, values: list[str] = None):
+        super().__init__(master=master)
+
+        if values is None:
+            values = []
+
+        self.values = values
+        self.val_validate = val_validate
+
         text_var = StringVar()
-        super().__init__(master=master, textvariable=text_var, validate='key', validatecommand=(master.register(self.validation), '%P'))
+        self.combobox = ttk.Combobox(self, textvariable=text_var, values=values)
+        self.combobox.grid(row=0, column=0)
+
+        self.btn = ttk.Button(self, text='+', state=constants.DISABLED, width=2, command=lambda: self.add_value(self.combobox.get()))
+        self.btn.grid(row=0, column=1)
+        #ToDo: доделать поведение кнопки
+    def add_value(self, value):
+        if self.val_validate is not None:
+            if self.val_validate(value):
+                self.values.append(value)
+                self.combobox.configure(values=self.values)
+            else:
+                self.warning()
+        else:
+            self.values.append(value)
+            self.combobox.configure(values=self.values)
+    def warning(self):
+        """Общий метод виджетов. Используется для маркировки неверно заполненных виджетов после пост-валидации."""
+        pass
 
     def validation(self, char):
         return string_validation(char)
 
-class CustomCombobox(ttk.Combobox):
-    """ttk.Combobox с кнопкой добавления значения""" #ToDo: доделать
+class CustomCombobox(Frame):
+    """Аналог ttk.Combobox с возможностью использования различных виджетов и кнопкой добавления значения"""
+    #ToDo: доделать
+    def __init__(self, master, widget, args: list = (), widgets: list = None):
+        super().__init__(master=master)
+        self.widgets_frm = ttk.Frame(master)
+        scrollbar = ttk.Scrollbar(self.widgets_frm, ) #ToDo: доделать фрейм и его расположение
+        if widgets is None:
+            self.widgets = []
+        else:
+            for i, widget in enumerate(widgets):
+                wdg = widget(self.widgets_frm)
+                wdg.grid(row=i, column=0)
+
+        self.btn = ttk.Button(self, text='^', command=self._open)
+        self.btn.grid(row=0, column=1)
+
+        self.main_entry = widget(master=self)
+        self.main_entry.grid(row=0, column=0)
+        self.main_entry.configure(args)
+
+    def _open(self):
+        self.widgets_frm.place(anchor=constants.W)
+    def _close(self):
+        self.widgets_frm.place_forget()
+
+    def _add_widget(self, widget):
+        #ToDo: добавление элемента в combobox
+        pass
+
+    def get(self):
+        pass
+
 
 if __name__ == '__main__':
     root = Tk()
     root.geometry('512x512')
-    numentry = NumEntry(root)
-    numentry.pack()
+    cbox = CustomCombobox(root, widget=Counter, widgets=[Counter, Counter, Counter])
+    cbox.pack()
     root.mainloop()
