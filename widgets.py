@@ -41,7 +41,7 @@ class EntryButton(Frame):
         self.entry.insert(index, string)
 
 
-class NumEntry(CTkEntry):
+class NumEntry(ttk.Entry):
     """CTkEntry с валидацией, позволяющей вводить только целые числа."""
 
     def __init__(self, master):
@@ -49,7 +49,7 @@ class NumEntry(CTkEntry):
         self.text.set('')
         self.allowed_chars = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
         super().__init__(master=master, textvariable=self.text, validate='key',
-                         validatecommand=(master.register(string_validation), '%P'))
+                         validatecommand=(master.register(string_validation), '%P'), width=6)
 
     def get(self) -> int:
         return self.get()
@@ -153,31 +153,39 @@ class AddableCombobox(Frame):
     def validation(self, char):
         return string_validation(char)
 
+    def get(self):
+        pass
+
 class CustomCombobox(Frame):
     """Аналог ttk.Combobox с возможностью использования различных виджетов и кнопкой добавления значения"""
     #ToDo: доделать
     def __init__(self, master, widget, args: list = (), widgets: list = None):
         super().__init__(master=master)
-        self.widgets_frm = ttk.Frame(master)
-        scrollbar = ttk.Scrollbar(self.widgets_frm, ) #ToDo: доделать фрейм и его расположение
+ #ToDo: доделать фрейм и его расположение
+        self.widgets = widgets
         if widgets is None:
-            self.widgets = []
-        else:
-            for i, widget in enumerate(widgets):
-                wdg = widget(self.widgets_frm)
-                wdg.grid(row=i, column=0)
+            self.widgets = [] #ToDo: продумать
 
-        self.btn = ttk.Button(self, text='^', command=self._open)
-        self.btn.grid(row=0, column=1)
+        self.btn = ttk.Button(self, text='▼', command=self._open, width=3)
+        self.btn.grid(row=0, column=1, sticky=constants.E)
 
         self.main_entry = widget(master=self)
-        self.main_entry.grid(row=0, column=0)
+        self.main_entry.grid(row=0, column=0, sticky=constants.E)
         self.main_entry.configure(args)
 
     def _open(self):
-        self.widgets_frm.place(anchor=constants.W)
+        self.widgets_frm = Frame(self.master)
+        self.widgets_frm.pack(anchor=constants.W)
+        self.btn.configure(command=self._close)
+
+        for i, widget in enumerate(self.widgets): #ToDo: переделать под forget
+            wdg = widget(self.widgets_frm)
+            wdg.grid(row=i, column=0)
+
     def _close(self):
-        self.widgets_frm.place_forget()
+        print('1')
+        self.widgets_frm.destroy()
+        self.btn.configure(command=self._open())
 
     def _add_widget(self, widget):
         #ToDo: добавление элемента в combobox
@@ -186,6 +194,36 @@ class CustomCombobox(Frame):
     def get(self):
         pass
 
+class TwiceNumEntry(Frame):
+    """Временный виджет, позже будет переделан"""
+    def __init__(self, master):
+        super().__init__(master=master)
+        self.entry1 = NumEntry(self)
+        self.entry1.grid(row=0, column=0)
+
+        self.entry2 = NumEntry(self)
+        self.entry2.grid(row=0, column=1)
+
+    def get(self):
+        return (self.entry1.get(), self.entry2.get())
+
+class FourthNumEntry(Frame):
+    def __init__(self, master):
+        super().__init__(master=master)
+        self.entry1 = NumEntry(self)
+        self.entry1.grid(row=0, column=0)
+
+        self.entry2 = NumEntry(self)
+        self.entry2.grid(row=0, column=1)
+
+        self.entry3 = NumEntry(self)
+        self.entry3.grid(row=0, column=2)
+
+        self.entry4 = NumEntry(self)
+        self.entry4.grid(row=0, column=3)
+
+    def get(self):
+        return (self.entry1.get(), self.entry2.get(), self.entry3.get(), self.entry4.get())
 
 if __name__ == '__main__':
     root = Tk()

@@ -5,7 +5,7 @@ from customtkinter import CTkEntry, CTkLabel, CTkTextbox, CTkCheckBox, CTkButton
 from datetime import datetime
 from threading import Thread
 
-from widgets import EntryButton, NumEntry, Counter, FromTo, AddableCombobox
+from widgets import EntryButton, NumEntry, Counter, FromTo, AddableCombobox, TwiceNumEntry, FourthNumEntry, CustomCombobox
 
 root = Tk()
 
@@ -68,39 +68,47 @@ class MainWindow:
         """Размещает виджеты параметров обработки. В словаре params_list ключами являются названия параметров, отображаемых в интерфейсе,
            значениями - виджеты, принимающие их. """
 
-        params_list = {'Целевая папка:': [EntryButton(self.main_frm, btn_color_en), 'input_dir'],
+        self.params_list = {'Целевая папка:': [EntryButton(self.main_frm, btn_color_en), 'input_dir'],
                        'Обработать изображения:': [FromTo(self.main_frm), 'total_images'],
                        'Процессы:': [Counter(self.main_frm, state='readonly', from_=1, to=8, width=3), 'threads']}
 
-        filters_list = {'Обработать:': [Counter(self.main_frm, from_=1, to=50000)], 'Формат:': [ttk.Combobox(self.main_frm, values=['JPEG', 'PNG', 'BMP'], state='readonly'),],
-                        'Разрешение:': (),
-                        'Размер:': (), 'Название:': [AddableCombobox(self.main_frm, )], 'Расширение:': [AddableCombobox(self.main_frm),], 'Кратность номера:': (),
-                        'Содержание:': (), 'Изменить размер:': (), 'Обрезать:': (),
-                        'Конвертировать:': [ttk.Combobox(self.main_frm, values=['JPEG', 'PNG', 'BMP'], state='readonly')], 'Переименовать:': (), 'Выгрузить в': [EntryButton(self.main_frm, btn_color_en)]}
+        self.filters_list = {'Обработать:': [Counter(self.main_frm, from_=1, to=50000), 'prepared'],
+                        'Формат:': [ttk.Combobox(self.main_frm, values=['JPEG', 'PNG', 'BMP'], state='readonly'), 'format'],
+                        'Разрешение:': [CustomCombobox(self.main_frm, widget=TwiceNumEntry), 'size'],
+                        'Размер:': [AddableCombobox(self.main_frm), 'weight'],
+                        'Название:': [AddableCombobox(self.main_frm), 'name'],
+                        'Расширение:': [AddableCombobox(self.main_frm), 'extension'],
+                        'Кратность номера:': [AddableCombobox(self.main_frm), 'number_multiplicity'],
+                        'Содержание:': [AddableCombobox(self.main_frm), 'content'],
+                        'Изменить размер:': [CustomCombobox(self.main_frm, widget=TwiceNumEntry), 'resize'],
+                        'Обрезать:': [CustomCombobox(self.main_frm, widget=FourthNumEntry), 'crop'],
+                        'Конвертировать:': [ttk.Combobox(self.main_frm, values=['JPEG', 'PNG', 'BMP'], state='readonly'), 'reformat'],
+                        'Переименовать:': [ttk.Entry(self.main_frm), 'rename'],
+                        'Выгрузить в': [EntryButton(self.main_frm, btn_color_en), 'output_dir']}
 
         column = 0
-        for key in list(params_list.keys()):
+        for key in list(self.params_list.keys()):
             label = CTkLabel(self.main_frm, text=key)
             label.grid(row=2, column=column, sticky=W)
 
-            widget = params_list[key][0]
-            widget.grid(row=2, column=column + 1, sticky=W)
+            widget = self.params_list[key][0]
+            widget.grid(row=2, column=column + 1, sticky=W+E)
 
-            params_list[key][0] = widget
+            self.params_list[key][0] = widget
             column += 2
 
         column = 0
-        for i, key in enumerate(list(filters_list.keys())):
+        for i, key in enumerate(list(self.filters_list.keys())):
             if column == 6:
                 column = 0
 
             label = CTkLabel(self.main_frm, text=key)
             label.grid(row=(i // 3) + 3, column=column, sticky=W)
 
-            if len(filters_list[key]) > 0: # Введено временно, до готовности всех виджетов
-                widget = filters_list[key][0] #ToDo: доделать размещение
-                widget.grid(row=(i // 3) + 3, column=column + 1, sticky=W)
-                filters_list[key][0] = widget
+            if len(self.filters_list[key]) > 0: # Введено временно, до готовности всех виджетов
+                widget = self.filters_list[key][0] #ToDo: доделать размещение
+                widget.grid(row=(i // 3) + 3, column=column + 1, sticky=W+E)
+                self.filters_list[key][0] = widget
 
             column += 2
         # Создание флажков save и delete
@@ -112,18 +120,37 @@ class MainWindow:
 
         delete_check = ttk.Checkbutton(self.main_frm, variable=self.delete, text='Удалять изображение из целевой папки')
         delete_check.grid(row=7, column=4, sticky=W, columnspan=2)
+
     def start_preparing(self):
         """Начинает обработку. Импортирует Preparer, меняет параметры кнопки, запускает отсчёт времени выполнения."""
         from program_logic import Preparer
       #ToDo: время обработки
       #  try:
         self.start_btn.configure(text=self.in_progress, state=DISABLED, fg_color=btn_color_dis)
+        params = [{}]
+        for key in list(self.params_list.keys()):
+            params[0][key] = self.params_list[key].get()
+
+        params[0]['filters'] = [{}]
+        i = 0
+        for key in list(self.filters_list.keys()):
+            if i == 8: break
+            params[0]['filters'] = self.filters_list[key].get()
+            i += 1
+
+        params[0]['filters']['actions'] = {}
+        for key in list(self.filters_list.keys())[8:-1]:
+            data = self.filters_list[key].get()
+            params[0]['filters']['actions'] = self.filters_list[key].get()
+
+        params[0]['filters']['actions']['save'] = self.save
+        params[0]['filters']['actions']['delete'] = self.delete
 
         self.counting = True
         counting = Thread(target=self.start_countdown)
         counting.start()
 
-        #Preparer
+        Preparer(parameters=params)
         self.counting = False
         self.start_btn.configure(text=self.start, state=NORMAL, fg_color=btn_color_en)
       #  except:
