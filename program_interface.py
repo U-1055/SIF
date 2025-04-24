@@ -43,7 +43,7 @@ class MainWindow:
         self.start = 'Начать обработку'
 
         self.main_frm = Frame(bg=frm_color_2)
-        self.main_frm.pack(anchor=NW)
+        self.main_frm.grid(row=0, column=0)
 
         self.main_lbl = CTkLabel(self.main_frm, text='Параметры обработки', font=title_font)
         self.main_lbl.grid(column=0, row=0, columnspan=6)
@@ -129,19 +129,19 @@ class MainWindow:
         self.start_btn.configure(text=self.in_progress, state=DISABLED, fg_color=btn_color_dis)
         params = [{}]
         for key in list(self.params_list.keys()):
-            params[0][key] = self.params_list[key].get()
+            params[0][key] = self.params_list[key][0].get()
 
         params[0]['filters'] = [{}]
         i = 0
         for key in list(self.filters_list.keys()):
             if i == 8: break
-            params[0]['filters'] = self.filters_list[key].get()
+            params[0]['filters'] = self.filters_list[key][0].get()
             i += 1
 
         params[0]['filters']['actions'] = {}
         for key in list(self.filters_list.keys())[8:-1]:
-            data = self.filters_list[key].get()
-            params[0]['filters']['actions'] = self.filters_list[key].get()
+            data = self.filters_list[key][0].get()
+            params[0]['filters']['actions'] = self.filters_list[key][0].get()
 
         params[0]['filters']['actions']['save'] = self.save
         params[0]['filters']['actions']['delete'] = self.delete
@@ -170,7 +170,7 @@ class MessageWindow:
 
     def __init__(self):
         self.main_frm = Frame(root, bg=frm_color_2)
-        self.main_frm.pack(anchor=SW)
+        self.main_frm.grid(row=1, column=0, sticky=W+E)
         self.widgets()
 
     def widgets(self):
@@ -179,7 +179,7 @@ class MessageWindow:
         self.message_box.grid(row=1, column=0, columnspan=2, sticky=W+E)
 
         self.progress_bar = CTkProgressBar(self.main_frm)# псевдокод
-        self.progress_bar.grid(row=0)
+        self.progress_bar.grid(row=0, sticky=W+E)
     def update_progress(self, value: float):
         self.progress_bar.set(value)
 
