@@ -69,7 +69,8 @@ class Counter(ttk.Spinbox):
                          from_=from_, to=to, state=state, width=width)
 
     def get(self) -> int:
-        return int(self.get())
+        parent = self
+        return int(parent.get())
 
     def validation(self, char):
         return string_validation(char)
