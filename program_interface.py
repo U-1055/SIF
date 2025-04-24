@@ -35,14 +35,13 @@ def preparer_stub():
     time.sleep(5)
     return
 
-
 class MainWindow:
     """Основное окно. Требуется для ввода параметров и запуска обработки."""
     def __init__(self):
         self.in_progress = 'Выполняется...'
         self.start = 'Начать обработку'
 
-        self.main_frm = Frame(bg=frm_color_2)
+        self.main_frm = Frame(bg=frm_color_2, highlightthickness=5, highlightcolor=frm_color_3)
         self.main_frm.grid(row=0, column=0)
 
         self.main_lbl = CTkLabel(self.main_frm, text='Параметры обработки', font=title_font)
@@ -59,8 +58,11 @@ class MainWindow:
         self.start_btn = CTkButton(self.main_frm, fg_color=btn_color_en, text=self.start, command=self.start_preparing)
         self.start_btn.grid(row=8, column=4, columnspan=2, sticky=W + E)
 
-        self.prep_time_lbl = CTkLabel(self.main_frm, fg_color=frm_color_3, text='Время обработки:')
-        self.prep_time_lbl.grid(row=8, column=2, columnspan=2, sticky=W + E)
+        self.prep_stat = ttk.Progressbar(self.main_frm)
+        self.prep_stat.grid(row=8, column=2, columnspan=2, sticky=W+E)
+
+        self.text = CTkTextbox(self.main_frm)
+        self.text.grid(row=9, column=0, columnspan=4, sticky=W+E)
 
         self.params()
 
@@ -79,7 +81,7 @@ class MainWindow:
                         'Название:': [AddableCombobox(self.main_frm), 'name'],
                         'Расширение:': [AddableCombobox(self.main_frm), 'extension'],
                         'Кратность номера:': [AddableCombobox(self.main_frm), 'number_multiplicity'],
-                        'Содержание:': [AddableCombobox(self.main_frm), 'content'],
+                        'Содержание:': [AddableCombobox(self.main_frm, values=['A', 'N', 'F']), 'content'],
                         'Изменить размер:': [CustomCombobox(self.main_frm, widget=TwiceNumEntry), 'resize'],
                         'Обрезать:': [CustomCombobox(self.main_frm, widget=FourthNumEntry), 'crop'],
                         'Конвертировать:': [ttk.Combobox(self.main_frm, values=['JPEG', 'PNG', 'BMP'], state='readonly'), 'reformat'],
@@ -123,54 +125,50 @@ class MainWindow:
 
     def start_preparing(self):
         """Начинает обработку. Импортирует Preparer, меняет параметры кнопки, запускает отсчёт времени выполнения."""
-        from program_logic import Preparer
       #ToDo: время обработки
       #  try:
+        self.start_time = time.time()
         self.start_btn.configure(text=self.in_progress, state=DISABLED, fg_color=btn_color_dis)
-        params = [{}]
-        for key in list(self.params_list.keys()):
-            params[0][key] = self.params_list[key][0].get()
-
-        params[0]['filters'] = [{}]
-        i = 0
-        for key in list(self.filters_list.keys()):
-            if i == 8: break
-            params[0]['filters'] = self.filters_list[key][0].get()
-            i += 1
-
-        params[0]['filters']['actions'] = {}
-        for key in list(self.filters_list.keys())[8:-1]:
-            data = self.filters_list[key][0].get()
-            params[0]['filters']['actions'] = self.filters_list[key][0].get()
-
-        params[0]['filters']['actions']['save'] = self.save
-        params[0]['filters']['actions']['delete'] = self.delete
-
-        self.counting = True
-        counting = Thread(target=self.start_countdown)
-        counting.start()
-
-        Preparer(parameters=params)
+        thread = Thread(target=self.prep_stat.start)
+        thread.start()
+        self.text.insert(END, '\nНачало обработки...')
+        prep_thread = Thread(target=self.starting)
+        prep_thread.start()
         self.counting = False
-        self.start_btn.configure(text=self.start, state=NORMAL, fg_color=btn_color_en)
       #  except:
             #messagebox.showerror('Непредвиденная ошибка обработки', f'Возникла непредвиденная ошибка обработки набора'
-    def start_countdown(self):
-        """Отсчитывает время с момента начал обработки."""
-        while self.counting:
-            self.prep_time_lbl.configure(text=f'Время обработки:{time.time_ns()}')
 
-
-class Validator:
-    def __init__(self):
-        pass
-
-
+    def starting(self):
+        from program_logic import Preparer
+        Preparer(
+            [{'input_dir': r"C:\Users\filat\OneDrive\Документы\Проект\target_dir", 'total_images': '', 'threads': 2,
+              'filters':  # -----------------------------------------------------------------------------------------
+                  [
+                      {'format': '',
+                       'size': '',
+                       'weight': '',
+                       'name': '',
+                       'extension': '',
+                       'number_multiplicity': '',
+                       'content': ['A', 'N', 'F'],
+                       'prepared': '',
+                       'actions':  # -----------------------------------------------------------------------------------
+                           {'resize': '',
+                            'crop': '',
+                            'reformat': 'PNG',
+                            'rename': '',
+                            'save': True,
+                            'delete': False,
+                            'output_dir': r"C:\Users\filat\OneDrive\Документы\Проект\output_dir"}}
+                  ]}])
+        self.prep_stat.stop()
+        self.start_btn.configure(text=self.start, state=NORMAL, fg_color=btn_color_en)
+        self.text.insert(END, f'\nКонец обработки\nВремя: {round(time.time() - self.start_time)} c.')
 class MessageWindow:
 
     def __init__(self):
         self.main_frm = Frame(root, bg=frm_color_2)
-        self.main_frm.grid(row=1, column=0, sticky=W+E)
+        self.main_frm.grid(row=1, column=0, sticky=W)
         self.widgets()
 
     def widgets(self):
@@ -180,17 +178,21 @@ class MessageWindow:
 
         self.progress_bar = CTkProgressBar(self.main_frm)# псевдокод
         self.progress_bar.grid(row=0, sticky=W+E)
+
+        self.error_tag = self.message_box.tag_config('error')
+        self.warning_tag = self.message_box.tag_config('warning')
+
     def update_progress(self, value: float):
         self.progress_bar.set(value)
 
+    def print_message(self, message: str, message_type: str = 'message'):
+        self.message_box.insert(END, message)
+        if message_type != 'message':
+            self.message_box.tag_add(message_type, END, f'{END} + {len(message)}s%')
 class HelpWindow():
     def __init__(self):
         pass
 
 if __name__ == '__main__':
     main_window = MainWindow()
-    message_window = MessageWindow()
-
-
-
     root.mainloop()

@@ -1,6 +1,7 @@
 import datetime
 import multiprocessing
 import os
+import random
 import time
 
 import filetype
@@ -17,13 +18,15 @@ from tests import check_chunks, check_replace, Test
 
 class Preparer:
     def __init__(self, parameters: list):
+       # from program_interface import MessageWindow
+
         self.send_message('Инициализация...')
         self.t1 = datetime.datetime.now()
 
         params_list = []
         for parameter in parameters:
             params_list.append(self.interpret_params(parameter))
-        print(params_list)
+
         self.image_ops(params_list)
         self.test = Test()
 
@@ -91,7 +94,7 @@ class Preparer:
                     for process in processes:
                         self.send_message(process.result())
 
-                check_chunks(parameters['input_dir'], chunks_size)
+             #   check_chunks(parameters['input_dir'], chunks_size)
             else:
                 self.send_message('Инициализация обработки...')
                 before = datetime.datetime.now()
@@ -100,7 +103,7 @@ class Preparer:
                 thread.join()
 
             after = datetime.datetime.now()
-            self.send_message(f'Обработка завершена: \nВремя: {after - before} \nЗагружено: ')
+            self.send_message(f'Обработка завершена: \nВремя: {after - self.t1} \nЗагружено: ')
 
     def operation_cycle(self, *args):
         """Выполняет операции с изображениями в одной папке. Вызывается при параллельной обработке"""
@@ -120,17 +123,15 @@ class Preparer:
                 image_params = self.get_image_params(image, parameters['input_dir'])
                 image_params['number_multiplicity'] = img_num
 
-                #ToDo: проверить работу self.dirs_files
-                #print(self.loaded_images)
                 for i, filters in enumerate(parameters['filters']):
 
                     if 'prepared' in list(filters.keys()):
                         if filters['prepared'] <= self.loaded_images[filters['actions']['output_dir']]:  # <= используется для безопасности, на случай если он каким-либо образом увеличит значение
                             parameters['filters'].pop(i)
-                            #print(f'Отсечка; {parameters['filters']}')
+
                             if len(parameters['filters']) == 0:
-                                print('Фильтры кончились')
                                 return datetime.datetime.now() - self.t1
+
                             continue
 
                     if self.check_image_compliance(image_params, filters, image):  # проверка соответствия изображения условиям
@@ -160,13 +161,13 @@ class Preparer:
 
                             self.dirs_files[actions['output_dir']].append(f'{image_params['name']}.{image_params['extension']}')
                             before_load = len(os.listdir(actions['output_dir'])) # тест dirs_files
-                            print(image_params['extension'])
+
                             image.save(
                                 os.path.join(actions['output_dir'],
                                              f'{image_params['name']}.{image_params['extension']}'),
                                 format=image_params['format'])
 
-                            check_replace(actions['output_dir'], before_load) # тест dirs_files
+                            #check_replace(actions['output_dir'], before_load) # тест dirs_files
                             image.close()
 
                         if actions['delete']:
@@ -338,38 +339,37 @@ class Preparer:
         pass
 
     def update_progress(self, all_images: int, prepared: int):
-        from program_interface import MessageWindow
         #ToDo: разобраться с импортами
 
         self.send_message('Ошибка обновления прогресса', 'error')
 
     def send_message(self, message: str, type: str = 'message'):
         """Передаёт сообщение в интерфейс. Types: message, warning, error, fatal error."""
-        from program_interface import MessageWindow
-        print(message)
+        pass
+       # self.msg_window.print_message(message)
 
 if __name__ == '__main__':
     errors = 0
     for i in range(1):
             print(f'{i}:')
-            Preparer([{'input_dir': r'par_tests\to_ico', 'total_images': '', 'threads': 1,
+            Preparer([{'input_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir', 'total_images': '', 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
                           {'format': '',
-                            'size': ((('>', 50 ), ('>', 50)),),
+                            'size': '',
                             'weight': '',
                             'name': '',
                             'extension': '',
-                            'number_multiplicity': (2,),
+                            'number_multiplicity': '',
                             'content': '',
                             'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
                                 {'resize': '',
                                  'crop': '',
-                                 'reformat': 'PNG',
-                                 'rename': '',
+                                 'reformat': '',
+                                 'rename': f'{random.randint(100, 315)}<total_num>-jpg',
                                  'save': True,
                                  'delete': True,
-                                 'output_dir': 'par_tests\\from_ico'}}
+                                 'output_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir'}}
                                            ]}])
 
