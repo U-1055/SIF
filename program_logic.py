@@ -1,5 +1,7 @@
 import datetime
+import multiprocessing
 import os
+import random
 import time
 
 import filetype
@@ -11,25 +13,22 @@ from concurrent.futures import ProcessPoolExecutor
 from natsort import natsorted
 from multiprocessing import Manager
 
-from prgm_test_image_generator import Test
-from tests import check_chunks
+from tests import check_chunks, check_replace, Test
 
-class Preparer():
+
+class Preparer:
     def __init__(self, parameters: list):
+       # from program_interface import MessageWindow
+
         self.send_message('Инициализация...')
         self.t1 = datetime.datetime.now()
 
         params_list = []
         for parameter in parameters:
             params_list.append(self.interpret_params(parameter))
-        print(params_list)
+
         self.image_ops(params_list)
         self.test = Test()
-        t2 = datetime.datetime.now()
-        print(f'Общее время: {t2-self.t1}')
-
-    def check_types(self):
-        pass
 
     def interpret_params(self, parameters: dict): #ToDo: вынести на уровень интерфейса
         """Интерпретирует параметры, переводя их из одного словаря в три: словарь констант, фильтров и действий"""
@@ -53,7 +52,6 @@ class Preparer():
 
         for parameters in params_list:
 
-            #ToDo: добавить типы сортировок имён файлов
             if 'total_images' in list(parameters.keys()):
                 slices = parameters['total_images']
                 files = natsorted(os.listdir(parameters['input_dir']))[slices[0]:slices[1]]
@@ -62,8 +60,8 @@ class Preparer():
 
             manager = Manager()
             self.loaded_images = manager.dict()
-            for i in range(len(parameters['filters'])):
-                self.loaded_images[str(i)] = 0
+            for filters in parameters['filters']:
+                self.loaded_images[filters['actions']['output_dir']] = 0
 
             self.dirs_files = manager.dict()
             self.inputed_in_nn = 0 #Вводится временно, для тестирования
@@ -86,7 +84,7 @@ class Preparer():
                         else:
                             preparing_chunk = files[i * chunk_size:(i + 1) * chunk_size]
 
-                        print(f'Размер: {len(preparing_chunk)}; Чанк: {i}')
+                        #print(f'Размер: {len(preparing_chunk)}; Чанк: {i}')
                         chunks_size += len(preparing_chunk)
                         process = pool.submit(self.operation_cycle, (parameters, preparing_chunk, i * chunk_size))
                         processes.append(process)
@@ -96,7 +94,7 @@ class Preparer():
                     for process in processes:
                         self.send_message(process.result())
 
-                check_chunks(parameters['input_dir'], chunks_size)
+             #   check_chunks(parameters['input_dir'], chunks_size)
             else:
                 self.send_message('Инициализация обработки...')
                 before = datetime.datetime.now()
@@ -105,7 +103,7 @@ class Preparer():
                 thread.join()
 
             after = datetime.datetime.now()
-            self.send_message(f'Время: {after - before}')
+            self.send_message(f'Обработка завершена: \nВремя: {after - self.t1} \nЗагружено: ')
 
     def operation_cycle(self, *args):
         """Выполняет операции с изображениями в одной папке. Вызывается при параллельной обработке"""
@@ -115,10 +113,9 @@ class Preparer():
         img_num = args[0][2]
 
         prepared = 0
-        compliancly = 0
-
+        files_num = 0
         for file in files:
-
+            files_num += 1
             if filetype.is_image(os.path.join(parameters['input_dir'], file)):  # проверка файла
                 prepared += 1
                 image = Image.open(os.path.join(parameters['input_dir'], file), 'r')
@@ -126,16 +123,15 @@ class Preparer():
                 image_params = self.get_image_params(image, parameters['input_dir'])
                 image_params['number_multiplicity'] = img_num
 
-                #ToDo: проверить работу self.dirs_files
-                print(self.loaded_images)
                 for i, filters in enumerate(parameters['filters']):
 
                     if 'prepared' in list(filters.keys()):
-                        if filters['prepared'] == self.loaded_images[str(i)]: #<= используется для безопасности, на случай если он каким-либо образом увеличит значение
-                            print('Отсечка', img_num)
-                        #    parameters['filters'].pop(i)
+                        if filters['prepared'] <= self.loaded_images[filters['actions']['output_dir']]:  # <= используется для безопасности, на случай если он каким-либо образом увеличит значение
+                            parameters['filters'].pop(i)
+
                             if len(parameters['filters']) == 0:
                                 return datetime.datetime.now() - self.t1
+
                             continue
 
                     if self.check_image_compliance(image_params, filters, image):  # проверка соответствия изображения условиям
@@ -164,23 +160,25 @@ class Preparer():
                                 iteration += 1
 
                             self.dirs_files[actions['output_dir']].append(f'{image_params['name']}.{image_params['extension']}')
-                            compliancly += 1
+                            before_load = len(os.listdir(actions['output_dir'])) # тест dirs_files
+
                             image.save(
                                 os.path.join(actions['output_dir'],
                                              f'{image_params['name']}.{image_params['extension']}'),
                                 format=image_params['format'])
+
+                            #check_replace(actions['output_dir'], before_load) # тест dirs_files
                             image.close()
 
                         if actions['delete']:
                             os.remove(os.path.join(parameters['input_dir'], file))
 
-                        if 'prepared' in list(filters.keys()):
-                            self.loaded_images[str(i)] += 1
-                        print('Prepared')
+                        self.loaded_images[filters['actions']['output_dir']] += 1
                         break
             img_num += 1
 
-        return f'Обработано: {prepared} | Img_num: {img_num}'
+        return {'images': prepared, 'files': files_num}
+
     def get_image_params(self, image: Image, input_dir: str):
         """Получает параметры изображения, возвращает словарь параметров. Добавляет format, name, extension, а также параметры,
            указанные в фильтрах."""
@@ -337,51 +335,41 @@ class Preparer():
 
         return img_filter
 
-    def send_message(self, message: str):
-        """Передаёт сообщение в интерфейс"""
+    def send_stat(self):
+        pass
 
-        print(message)
+    def update_progress(self, all_images: int, prepared: int):
+        #ToDo: разобраться с импортами
 
+        self.send_message('Ошибка обновления прогресса', 'error')
+
+    def send_message(self, message: str, type: str = 'message'):
+        """Передаёт сообщение в интерфейс. Types: message, warning, error, fatal error."""
+        pass
+       # self.msg_window.print_message(message)
 
 if __name__ == '__main__':
     errors = 0
     for i in range(1):
-
-            Preparer([{'input_dir': r'par_tests\\test_with_syncman', 'total_images': '', 'sort_type': '', 'threads': 2,
+            print(f'{i}:')
+            Preparer([{'input_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir', 'total_images': '', 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
                           {'format': '',
-                            'size': (((40, '>'), (40, '>')), ),
+                            'size': '',
                             'weight': '',
                             'name': '',
                             'extension': '',
                             'number_multiplicity': '',
                             'content': '',
-                            'prepared': 50,
+                            'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
                                 {'resize': '',
                                  'crop': '',
                                  'reformat': '',
-                                 'rename': '',
+                                 'rename': f'{random.randint(100, 315)}<total_num>-jpg',
                                  'save': True,
-                                 'delete': False,
-                                 'output_dir': 'par_tests\\st.1'}},
-                             {'format': '',
-                              'size': (((40, '<='), (40, '<=')),),
-                              'weight': '',
-                              'name': '',
-                              'extension': '',
-                              'number_multiplicity': '',
-                              'content': '',
-                              'prepared': 75,
-                              'actions':  # -----------------------------------------------------------------------------------
-                                  {'resize': '',
-                                   'crop': '',
-                                   'reformat': '',
-                                   'rename': '',
-                                   'save': True,
-                                   'delete': False,
-                                   'output_dir': 'par_tests\\st.2'}}
+                                 'delete': True,
+                                 'output_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir'}}
                                            ]}])
 
-    print(f'Ошибок: {errors}')
