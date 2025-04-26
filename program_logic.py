@@ -84,7 +84,6 @@ class Preparer:
                         else:
                             preparing_chunk = files[i * chunk_size:(i + 1) * chunk_size]
 
-                        #print(f'Размер: {len(preparing_chunk)}; Чанк: {i}')
                         chunks_size += len(preparing_chunk)
                         process = pool.submit(self.operation_cycle, (parameters, preparing_chunk, i * chunk_size))
                         processes.append(process)
@@ -94,7 +93,6 @@ class Preparer:
                     for process in processes:
                         self.send_message(process.result())
 
-             #   check_chunks(parameters['input_dir'], chunks_size)
             else:
                 self.send_message('Инициализация обработки...')
                 before = datetime.datetime.now()
@@ -167,7 +165,6 @@ class Preparer:
                                              f'{image_params['name']}.{image_params['extension']}'),
                                 format=image_params['format'])
 
-                            #check_replace(actions['output_dir'], before_load) # тест dirs_files
                             image.close()
 
                         if actions['delete']:
@@ -346,30 +343,3 @@ class Preparer:
     def send_message(self, message: str, type: str = 'message'):
         """Передаёт сообщение в интерфейс. Types: message, warning, error, fatal error."""
         pass
-       # self.msg_window.print_message(message)
-
-if __name__ == '__main__':
-    errors = 0
-    for i in range(1):
-            print(f'{i}:')
-            Preparer([{'input_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir', 'total_images': '', 'threads': 1,
-                   'filters': #-----------------------------------------------------------------------------------------
-                         [
-                          {'format': '',
-                            'size': '',
-                            'weight': '',
-                            'name': '',
-                            'extension': '',
-                            'number_multiplicity': '',
-                            'content': '',
-                            'prepared': '',
-                            'actions':  # -----------------------------------------------------------------------------------
-                                {'resize': '',
-                                 'crop': '',
-                                 'reformat': '',
-                                 'rename': f'{random.randint(100, 315)}<total_num>-jpg',
-                                 'save': True,
-                                 'delete': True,
-                                 'output_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir'}}
-                                           ]}])
-
