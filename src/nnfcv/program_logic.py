@@ -1,5 +1,4 @@
 import datetime
-import multiprocessing
 import os
 import random
 import time
@@ -12,8 +11,6 @@ from threading import Thread
 from concurrent.futures import ProcessPoolExecutor
 from natsort import natsorted
 from multiprocessing import Manager
-
-from tests import check_chunks, check_replace, Test
 
 
 class Preparer:
@@ -28,9 +25,8 @@ class Preparer:
             params_list.append(self.interpret_params(parameter))
 
         self.image_ops(params_list)
-        self.test = Test()
 
-    def interpret_params(self, parameters: dict): #ToDo: вынести на уровень интерфейса
+    def interpret_params(self, parameters: dict):
         """Интерпретирует параметры, переводя их из одного словаря в три: словарь констант, фильтров и действий"""
 
         for param in list(parameters.keys()):
@@ -279,6 +275,7 @@ class Preparer:
                 compliance = False
 
         return compliance
+
     def do_actions(self, actions: dict, image: Image, image_params: dict):
         """Выполняет указанные пользователем действия с изображением."""
 
@@ -304,13 +301,14 @@ class Preparer:
         return image, image_params
 
     def create_re(self, request: str):
-        """Формирует регулярное выражение из полученной строки. На 11.02.2025. заменяет символ * на символ *.* и
-           добавляет символ ^ в начало и $ в конеу"""
+        """Формирует регулярное выражение из полученной строки. Заменяет символ * на символ *.* и
+           добавляет символ ^ в начало и $ в конец"""
 
         if '*' in request:
             request = request.replace('*', '.*')
 
         return f'^{request}$'
+
     def rename_image(self, params: dict, img_filter: str, image: Image):
         """Переименовывает изображения по заданному шаблону. <name> - имя изображения, <total_num> - номер в входной папке,
            <сontent> - содержимое изображения, <format> - формат изображения."""
@@ -352,7 +350,7 @@ if __name__ == '__main__':
     errors = 0
     for i in range(1):
             print(f'{i}:')
-            Preparer([{'input_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir', 'total_images': '', 'threads': 1,
+            Preparer([{'input_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir', 'total_images': (0, 10), 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
                           {'format': '',
@@ -361,7 +359,7 @@ if __name__ == '__main__':
                             'name': '',
                             'extension': '',
                             'number_multiplicity': '',
-                            'content': '',
+                            'content': 'I',
                             'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
                                 {'resize': '',

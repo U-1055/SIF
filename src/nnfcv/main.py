@@ -20,6 +20,14 @@ letters_data = {
 
 }
 
+data_path = os.path.join(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(__file__)
+    )),
+    'data', 'NN_data'
+)
+
 class MyDataset(Dataset): #класс, наследуемый от класса Dataset из PyTorch. Нужен для создания пользовательского набора данных
 
     def __init__(self, annotations_file, img_dir, transform=None, target_transform=None):
@@ -114,10 +122,10 @@ class NN_learning():
 
         """Инициализирующий метод, объявляет пути к данным, классы наборов данных и их загрузчиков"""
 
-        annotation_path_tr = os.path.join('Letters.v1i.multiclass', 'train', '_classes.csv')
-        annotation_path_ts = os.path.join('Letters.v1i.multiclass', 'test', '_classes.csv')
-        image_dir_tr = os.path.join('Letters.v1i.multiclass', 'train')
-        image_dir_ts = os.path.join('Letters.v1i.multiclass', 'test')
+        annotation_path_tr = os.path.join(data_path, 'Letters.v1i.multiclass', 'train', '_classes.csv')
+        annotation_path_ts = os.path.join(data_path, 'Letters.v1i.multiclass', 'test', '_classes.csv')
+        image_dir_tr = os.path.join(data_path, 'Letters.v1i.multiclass', 'train')
+        image_dir_ts = os.path.join(data_path, 'Letters.v1i.multiclass', 'test')
 
         trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         train_data = MyDataset(annotation_path_tr, image_dir_tr, trans)
@@ -218,13 +226,13 @@ class NN_learning():
 def define_image(image):
     """Функция для вызова из файла интерфейса, нормализует изображение и вводит его в нейронную сеть в виде тензора"""
 
-    time1 = datetime.now()
+    weights_path = os.path.join(data_path, 'model_weights.txt')
 
     to_dtype = torchvision.transforms.v2.ToDtype(torch.float32)
     tensor = torchvision.transforms.ToTensor()
     softmax = nn.Softmax(dim=1)
     model = NN()
-    model.load_state_dict(torch.load('model_weights.txt', weights_only=True))
+    model.load_state_dict(torch.load(weights_path, weights_only=True))
 
     img = image.resize((160, 160))
     img = tensor(img)
@@ -240,6 +248,7 @@ def define_image(image):
         time2 = datetime.now()
 
         return [letters_data[str(torch.argmax(pred).item())]] #ToDo: внимание, инетерфейс не будет работать т.к. функция возвращает только одно значение
+
 
 if __name__ == '__main__':
     NN_learning()
