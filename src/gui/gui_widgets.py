@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QSpinBox, QComboBox, QCheckBox
 from abc import abstractmethod
 import typing as tp
 
-from nnfcv.common_widgets.common_widgets import QManyField, QPathEdit, QLineEditComboBox
+from src.common_widgets.common_widgets import QManyField, QPathEdit, QLineEditComboBox
 
 
 class InputWidget:
