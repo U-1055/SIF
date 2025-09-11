@@ -42,6 +42,16 @@ class MainWindow(QMainWindow, View):
         else:
             self._config_struct: ViewConfigStruct | None = None
             self._config_data: dict | None = None
+        self._wdg_data: dict[str, QWidget | QFormLayout | QLayout | inp.InputWidget | QComboBox] = {}
+        self._base_initialize()
+
+    def _base_initialize(self):
+        self._main_layout = QVBoxLayout()
+        self._wdg_data[self.MAIN] = self._main_layout
+
+        container = QWidget()
+        container.setLayout(self._main_layout)
+        self.setCentralWidget(container)
 
     def _place_widgets(self):
         main_layout = QVBoxLayout()
@@ -129,10 +139,10 @@ class MainWindow(QMainWindow, View):
         wdg_prepared = inp.QInpSpinBox()
         wdg_prepared.add_to_struct(self._config_struct[self.FILTERS][0], self.PREPARED)
 
-        wdg_resize = inp.QInpIntField(2)
+        wdg_resize = inp.QInpIntFields(2)
         wdg_resize.add_to_struct(self._config_struct[self.FILTERS][0][self.ACTIONS], self.RESIZE)
 
-        wdg_crop = inp.QInpIntField(4)
+        wdg_crop = inp.QInpIntFields(4)
         wdg_crop.add_to_struct(self._config_struct[self.FILTERS][0][self.ACTIONS], self.CROP)
 
         wdg_reformat = inp.QInpComboBox(self._formats)
@@ -182,16 +192,9 @@ class MainWindow(QMainWindow, View):
     def set_presenter(self, presenter: 'Presenter' = None):
         self._presenter = presenter
         self.update_config()
-        self._place_widgets()
 
     def update_config(self):
-        self._config_struct = self._presenter.config_struct
-        self._config_data = self._presenter.init_data
-
-        self._config_list = self._config_data[const.CONFIGS_LIST]
-        self._config_name = self._config_data[const.CONFIG_NAME]
-        self._filters_num = self._config_data[const.FILTERS]
-        self._formats = ['JPEG', 'PNG', 'BMP']
+        pass
 
     def widget_state(self):
         pass
@@ -206,10 +209,79 @@ class MainWindow(QMainWindow, View):
     def change_theme(self, style):
         pass
 
-    @property
-    def formats(self):
-        return self._formats
+    def insert_text(self, widget: str, text: str):
+        self._wdg_data[widget].insert_data(text)
 
-    @formats.setter
-    def formats(self, formats: tp.Collection):
-        self._formats = formats
+    def clear(self, widget: str):
+        self._wdg_data[widget].clear_widget()
+
+    def get_text(self, widget: str):
+        self._wdg_data[widget]: inp.InputWidget
+        self._wdg_data[widget].get()
+
+    def _add_widget(self, key: str, widget: QWidget, label: str, field: str, tooltip: str | None = None):
+        if tooltip:
+            widget.setToolTip(tooltip)
+        self._wdg_data[key] = widget
+        self._wdg_data[field].addRow(label, widget)
+
+    def add_field(self, key: str, label: str | None, field: str | None, tooltip: str | None = None):
+        wdg = QFormLayout()
+        if field:
+            self._wdg_data[field].addLayout(wdg)
+        self._wdg_data[key] = wdg
+
+    def add_combobox(self, key: str, label: str, field: str, values: tp.Sequence[str], tooltip: str | None = None):
+        self._add_widget(key, inp.QInpComboBox(values), label, field, tooltip)
+
+    def add_path_edit(self, key: str, label: str, field: str, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpPathEdit(), label, field, tooltip)
+
+    def add_counter(self, key: str, label: str, field: str, min_: int, max_: int, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpSpinBox(min_, max_), label, field, tooltip)
+
+    def add_wdg_many_fields(self, key: str, label: str, field: str, fields: int, min_: int, max_: int, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpIntFields(fields, min_, max_), label, field, tooltip)
+
+    def add_memory_counter(self, key: str, label: str, field: str, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpMemoryEditComboBox(), label, field, tooltip)
+
+    def add_line_edit(self, key: str, label: str, field: str, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpLineEdit(), label, field, tooltip)
+
+    def add_control_btn(self, key: str, label: str, field: str, command: tp.Callable, tooltip: str | None = None):
+        btn_control = QPushButton(label)
+        btn_control.clicked.connect(command)
+        if tooltip:
+            btn_control.setToolTip(tooltip)
+        self._wdg_data[key] = btn_control
+        self._wdg_data[field].addWidget(btn_control)
+
+    def add_control_combobox(self, key: str, field: str, command: tp.Callable, values: tuple | list, tooltip: str | None = None):
+        control_cbox = inp.QInpComboBox(values)
+        control_cbox.currentIndexChanged.connect(command)
+
+        self._wdg_data[key] = control_cbox
+        self._wdg_data[field].addWidget(control_cbox)
+
+    def add_switch(self, key: str, label: str, field: str, state: bool, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpCheckBox(state), label, field)
+
+    def add_text_shower(self, key: str, label: str, field: str, tooltip: str | None = None):
+        pass
+
+    def insert_control_combobox(self, key: str, insert: str):
+        combobox: QComboBox = self._wdg_data[key]
+        if insert not in tuple(combobox.itemText(idx) for idx in range(combobox.count())):
+            combobox.addItem(insert)
+        combobox.setCurrentText(insert)
+
+    @tp.overload
+    def insert(self, widget: str, input_: str): pass
+    def insert(self, widget: str, input_: tuple):
+        self._wdg_data[widget].insert_data(input_)
+
+    @tp.overload
+    def get(self, widget: str) -> str: pass
+    def get(self, widget: str) -> tuple:
+        return self._wdg_data[widget].get()

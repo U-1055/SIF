@@ -3,6 +3,7 @@ from gui_view import MainWindow
 from gui_model import Saver
 from gui_presenter import LogicManager
 from interfaces import Presenter, View
+from tests.VP_tests.model import TestModel
 
 
 def init_view(view: QMainWindow):
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     app = QApplication()
     root = MainWindow()
     init_view(root)
-    model = Saver()
+    model = TestModel()
     presenter = LogicManager({}, model, root)
     root.set_presenter(presenter)
 

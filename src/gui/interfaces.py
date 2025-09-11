@@ -53,12 +53,98 @@ config = {
 
 class View:
 
+    MAIN = 'main_field'
+
     def __init__(self, presenter: 'Presenter' = None):
         if presenter:
             self._presenter: Presenter | None = presenter
         else:
             self._presenter: Presenter | None = None
 
+    @abstractmethod
+    def update_form(self, config: ConfigStruct):
+        pass
+
+    @abstractmethod
+    def add_field(self, key: str, label: str | None, field: str | None, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_line_edit(self, key: str, label: str, field: str, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_counter(self, key: str, label: str, field: str, min_: int, max_: int, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_form_switch(self, key: str, label: str, field: str, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_combobox(self, key: str, label: str, field: str, values: tp.Sequence[str], tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_switch_counter(self, key: str, label: str, field: str, units: tp.Sequence, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_memory_counter(self, key: str, label: str, field: str, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_wdg_many_fields(self, key: str, label: str, field: str, fields: int, min_: int, max_: int, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_switch(self, key: str, label: str, field: str, state: bool, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_path_edit(self, key: str, label: str, field: str, tooltip: str | None = None):
+        pass
+
+    # ToDo: продукоментировать по окончании работы
+
+    @abstractmethod
+    def add_text_shower(self, key: str, label: str, field: str, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_button(self, field: str, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_control_btn(self, key: str, label: str, field: str, command: tp.Callable, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_control_combobox(self, key: str, field: str, command: tp.Callable, values: tuple | list, tooltip: str | None = None):
+        """
+        ...
+        :param command: a callable object that has 1 argument of type int
+                        (to that will send index of item what was chosen by user).
+        """
+
+    @abstractmethod
+    def insert_control_combobox(self, key: str, insert: str):
+        pass
+
+    @tp.overload
+    @abstractmethod
+    def insert(self, widget: str, input_: str): pass
+    def insert(self, widget: str, input_: tuple): pass
+
+    @tp.overload
+    @abstractmethod
+    def get(self, widget: str) -> str: pass
+    def get(self, widget: str) -> tuple: pass
+
+    def clear(self, widget: str):
+        pass
+
+    @abstractmethod
     def show_errors(self, widgets: tp.Collection[str]):
         pass
 
@@ -126,7 +212,7 @@ class Presenter:
         self._filters_now: int = 0
 
     @abstractmethod
-    def prepare_data(self, data: ConfigStruct):
+    def prepare_data(self):
         """Обрабатывает данные от View."""
         pass
 

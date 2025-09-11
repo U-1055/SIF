@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from interfaces import Model, ConfigStruct, Filter
 import gui_const as const
 
@@ -6,6 +8,7 @@ class Saver(Model):
 
     def __init__(self):
         super().__init__()
+        self._path: Path
 
     def _load_last_data(self):
         pass
@@ -23,9 +26,9 @@ class Saver(Model):
         return {
             const.CONFIG_NAME: 'Stub_config',
             const.FILTERS: 2,
-            const.CONFIGS_LIST: ('Stub_config',)
-                }
+            const.CONFIGS_LIST: ('Stub_config', 'sth', 'sth2')
+            }
 
     def config_name(self) -> str:
-        return
+        pass
 

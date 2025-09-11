@@ -1,0 +1,26 @@
+{
+                   "input_dir": "config4", "total_images": "", "threads": 1,
+                   "filters":
+                         [
+                          {
+                            "format": "PNG",
+                            "size": [160, 200],
+                            "weight": "",
+                            "name": "",
+                            "extension": "",
+                            "number_multiplicity": 5,
+                            "content": "Pull up",
+                            "prepared": "",
+                            "actions":
+                                {
+                                 "resize": "",
+                                 "crop": "",
+                                 "reformat": "",
+                                 "rename": "",
+                                 "save": false,
+                                 "delete": true,
+                                 "output_dir": ""
+                                }
+                          }
+                         ]
+}

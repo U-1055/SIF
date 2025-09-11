@@ -1,27 +1,9 @@
-IN_PROGRESS = 'Выполняется...'
-START = 'Начать обработку'
+import json
+import test_data as td
+from pathlib import Path
 
-TEXT_INPUT_DIR = 'Целевая папка'
-TEXT_TOTAL = 'Проверить изображений'
-TEXT_THREADS = 'Потоки'
-TEXT_FORMAT = 'Формат'
-TEXT_WEIGHT = 'Размер файла'
-TEXT_EXTENSION = 'Расширение'
-TEXT_NUMBER_MULTIPLICITY = 'Кратность номера изображения'
-TEXT_CONTENT = 'Содержимое изображения'
-TEXT_PREPARED = 'Обработать изображений'
-TEXT_RESIZE = 'Изменить размер на'
-TEXT_CROP = 'Обрезать'
-TEXT_REFORMAT = 'Конвертировать'
-TEXT_SAVE = 'Сохранить в выходной папке'
-TEXT_DELETE = 'Удалить из целевой папки'
-TEXT_OUTPUT_DIR = 'Выходная папка'
-
-CONFIG_NAME = 'config_name'
-CONFIGS_LIST = 'configs_list'
-FILTERS = 'filters'
-
-validation_rules = {
+def create_configs(num: int):
+    config = {
                    'input_dir': '', 'total_images': '', 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
@@ -46,4 +28,10 @@ validation_rules = {
                                 }
                           }
                          ]
-}
+                   }
+
+    with open(Path(td.test_path, 'configs'), 'wb') as config_file:
+        json.dump(config_file, config)
+
+if __name__ == '__main__':
+    create_configs(1)
