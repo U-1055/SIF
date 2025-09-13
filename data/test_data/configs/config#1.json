@@ -1,1 +1,0 @@
-{"input_dir": "config1", "total_images": "", "threads": 1, "filters": [{"format": "JPEG", "size": ["", ""], "weight": "", "name": "", "extension": "jpg", "number_multiplicity": "5", "content": "Pull up", "prepared": "", "actions": {"resize": ["", ""], "crop": ["", "", "", ""], "reformat": "JPEG", "rename": "", "save": false, "delete": true, "output_dir": ""}}]}

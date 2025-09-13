@@ -1,3 +1,4 @@
+import pathlib
 from abc import abstractmethod, abstractproperty
 from gui_widgets import InputWidget
 import typing as tp
@@ -43,7 +44,7 @@ config = {
                                  'reformat': '',
                                  'rename': '',
                                  'save': True,
-                                 'delete': True,
+                                 'delete': False,
                                  'output_dir': ''
                                 }
                           }
@@ -66,66 +67,81 @@ class View:
         pass
 
     @abstractmethod
-    def add_field(self, key: str, label: str | None, field: str | None, tooltip: str | None = None):
+    def add_field(self, key: str, label: str | None, field: str, type_: str = 'v', tooltip: str | None = None):
+        """
+        Add field named key to field.
+        :param key: adding field's name.
+        :param label: label on the field.
+        :param field: parent field.
+        :param type_: type of the field. Must be "v" - vertical, "h" - horizontal or "f" - form.
+        :param tooltip: tooltip of the field.
+        """
+
+    @abstractmethod
+    def add_line_edit(self, key: str, label: str, field: str, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_line_edit(self, key: str, label: str, field: str, tooltip: str | None = None):
+    def add_counter(self, key: str, label: str, field: str, min_: int, max_: int, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_counter(self, key: str, label: str, field: str, min_: int, max_: int, tooltip: str | None = None):
+    def add_form_switch(self, key: str, label: str, field: str, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_form_switch(self, key: str, label: str, field: str, tooltip: str | None = None):
+    def add_combobox(self, key: str, label: str, field: str, values: tp.Sequence[str], alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_combobox(self, key: str, label: str, field: str, values: tp.Sequence[str], tooltip: str | None = None):
+    def add_switch_counter(self, key: str, label: str, field: str, units: tp.Sequence, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_switch_counter(self, key: str, label: str, field: str, units: tp.Sequence, tooltip: str | None = None):
+    def add_memory_counter(self, key: str, label: str, field: str, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_memory_counter(self, key: str, label: str, field: str, tooltip: str | None = None):
+    def add_wdg_many_fields(self, key: str, label: str, field: str, fields: int, min_: int, max_: int, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_wdg_many_fields(self, key: str, label: str, field: str, fields: int, min_: int, max_: int, tooltip: str | None = None):
+    def add_switch(self, key: str, label: str, field: str, state: bool, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_switch(self, key: str, label: str, field: str, state: bool, tooltip: str | None = None):
-        pass
-
-    @abstractmethod
-    def add_path_edit(self, key: str, label: str, field: str, tooltip: str | None = None):
+    def add_path_edit(self, key: str, label: str, field: str, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     # ToDo: продукоментировать по окончании работы
 
     @abstractmethod
-    def add_text_shower(self, key: str, label: str, field: str, tooltip: str | None = None):
+    def add_text_shower(self, key: str, label: str, field: str, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_button(self, field: str, tooltip: str | None = None):
+    def add_button(self, field: str, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_control_btn(self, key: str, label: str, field: str, command: tp.Callable, tooltip: str | None = None):
+    def add_control_btn(self, key: str, label: str, field: str, command: tp.Callable, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
-    def add_control_combobox(self, key: str, field: str, command: tp.Callable, values: tuple | list, tooltip: str | None = None):
+    def add_control_combobox(self, key: str, field: str, command: tp.Callable, values: tuple | list, alignment: tp.Any, tooltip: str | None = None):
         """
         ...
         :param command: a callable object that has 1 argument of type int
                         (to that will send index of item what was chosen by user).
         """
+
+    @abstractmethod
+    def add_label(self, key: str, text: str, field: str, alignment: tp.Any):
+        pass
+
+    @abstractmethod
+    def show_input_dialog_window(self, title: str, message: str = None) -> ...:
+        pass
 
     @abstractmethod
     def insert_control_combobox(self, key: str, insert: str):
@@ -148,21 +164,55 @@ class View:
     def show_errors(self, widgets: tp.Collection[str]):
         pass
 
+    @abstractmethod
+    def apply_style(self, widget: str, style: str):
+        pass
+
     def set_presenter(self, presenter: 'Presenter' = None):
         self._presenter = presenter
 
     def show_msg(self, msg: str):
-        """Передаёт сообщение в виджет отслеживания обработки."""
+        """Show message in widget"""
 
     def update_config(self):
         """Обновляет конфиг"""
 
+    @property
+    def root_field(self):
+        """Return the name of the root field ("main_field" default)."""
+        return self.MAIN
+
+    @property
+    @abstractmethod
+    def alignment_right(self):
+        """Returns value of right alignment flag for this View."""
+        pass
+
+    @property
+    @abstractmethod
+    def alignment_left(self):
+        """Returns value of left alignment flag for this View."""
+        pass
+
+    @property
+    @abstractmethod
+    def alignment_top(self):
+        """Returns value of top alignment flag for this View."""
+        pass
+
+    @property
+    @abstractmethod
+    def alignment_bottom(self):
+        """Returns value of bottom alignment flag for this View."""
+        pass
 
 class Model:
 
-    def __init__(self):
+    def __init__(self, path: pathlib.Path, config_example: ConfigStruct):
         self._is_log: bool = False
         self._config_name: str = self._get_config_name()
+        self._config_example = config_example
+        self._path = path
 
     @abstractmethod
     def _get_config_name(self) -> str:
@@ -182,6 +232,14 @@ class Model:
         """Сохраняет конфиг под заданным именем."""
 
     @abstractmethod
+    def add_config(self, config_name: str):
+        pass
+
+    @abstractmethod
+    def add_filters(self, config_name: str):
+        pass
+
+    @abstractmethod
     def get_config_data(self) :
         """
         Возвращает информацию о конфигах в виде:
@@ -189,6 +247,10 @@ class Model:
          config_list: "Имена всех конфигов",
          "filters": число фильтров в последнем конфиге}
         """
+
+    @abstractmethod
+    def get_style(self, style_name: str) -> str:
+        """Возвращает строку стиля QSS."""
 
     def create_writing(self):
         """Создаёт новый лог обработки."""

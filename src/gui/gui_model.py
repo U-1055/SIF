@@ -6,11 +6,14 @@ import gui_const as const
 
 class Saver(Model):
 
-    def __init__(self):
+    def __init__(self, path: Path):
         super().__init__()
-        self._path: Path
+        self._path: path
 
     def _load_last_data(self):
+        pass
+
+    def _get_full_config(self):
         pass
 
     def get_config(self, config_name: str, filter_num: int) -> ConfigStruct:
@@ -31,4 +34,9 @@ class Saver(Model):
 
     def config_name(self) -> str:
         pass
+
+    def get_style(self, style_name: str) -> str:
+        if Path(style_name).is_file():
+            with open(Path(self._path, f'{style_name}.qss')) as style:
+                return style.read()
 

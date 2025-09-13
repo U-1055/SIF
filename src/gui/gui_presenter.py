@@ -7,6 +7,9 @@ class LogicManager(Presenter):
 
     MAIN_FIELD = 'main_field'
     CONFIGS_LIST = 'configs_list'
+    TOOLS_FIELD = 'tools_field'
+    SETTINGS_FIELD = 'settings_field'
+    CONTROL_FIELD = 'control_field'
 
     # ключи конфига
     INPUT_PARAMS = 3
@@ -36,10 +39,16 @@ class LogicManager(Presenter):
 
     BTN_START = 'btn_start'
     BTN_SAVE = 'btn_save'
+    BTN_ADD_CONF = 'btn_add_conf'
+    BTN_ADD_FILTERS = 'btn_add_filters'
     BTN_DELETE = 'btn_delete'
     TEXT_SHOWER = 'text_shower'
     CONFIG_SWITCH = 'config_switch'
     FILTERS_SWITCH = 'filters_switch'
+    FILTERS_CONTROL_FIELD = 'filters_control_field'
+
+    ADD_CONF_TITLE = 'Введите название конфига'
+    LBL_NONE = 'Не учитывать'
 
     fields = (
         INPUT_DIR,
@@ -85,9 +94,12 @@ class LogicManager(Presenter):
         DELETE: 'Удалить из целевой папки',
         OUTPUT_DIR: 'Выходная папка',
         BTN_START: 'Начать обработку',
+        BTN_ADD_CONF: 'Добавить конфиг',
+        BTN_ADD_FILTERS: 'Добавить настройки',
         CONFIG_SWITCH: 'Изменить конфиг',
         FILTERS_SWITCH: 'Изменить настройки',
-        BTN_SAVE: 'Сохранить конфиг'
+        BTN_SAVE: 'Сохранить конфиг',
+        ADD_CONF_TITLE: 'Введите название нового конфига'
     }
 
     tooltips = {   # ToDo: написать подсказки
@@ -112,63 +124,92 @@ class LogicManager(Presenter):
         DELETE: 'Удалить из целевой папки',
         OUTPUT_DIR: 'Выходная папка',
         BTN_START: 'Начать обработку',
+        BTN_ADD_CONF: 'Добавить конфиг',
+        BTN_ADD_FILTERS: 'Добавить настройки',
         CONFIG_SWITCH: 'Изменить конфиг',
         FILTERS_SWITCH: 'Изменить настройки',
-        BTN_SAVE: 'sth'
+        BTN_SAVE: 'Сохранить'
     }
 
     allowed_params = {
-        FORMAT: ('JPEG', 'PNG', 'BMP'),
-        EXTENSION: ('jpg', 'png', 'bmp'),
-        REFORMAT: ('JPEG', 'PNG', 'BMP'),
+        FORMAT: (LBL_NONE, 'JPEG', 'PNG', 'BMP'),
+        EXTENSION: (LBL_NONE, 'jpg', 'png', 'bmp'),
+        REFORMAT: (LBL_NONE, 'JPEG', 'PNG', 'BMP'),
     }
 
-    def __init__(self, validation_params: dict, model: object = None, view: object = None):
+    def __init__(self, validation_params: dict, model=None, view=None):
         super().__init__(model, view)
+        if model:
+            self._model = model
+        if view:
+            self._view = view
+            self.MAIN_FIELD = self._view.root_field
+
         self._validation_params: dict = validation_params
         self._config_name: str = self._model.config_name
         self._config_struct: ConfigStruct = self._model.get_config(self._config_name, self._filters_now)
-        self._init_data = self._model.get_config_data()
 
+        self._update_configs_data()
+        self._config_view()
+        self._update_config(self._config_struct)
+
+    def _update_configs_data(self):
+        self._init_data = self._model.get_config_data()
         self._configs: list = self._init_data[self.CONFIGS_LIST]
         self._filters_num: int = self._init_data[self.FILTERS]
 
         if self._config_struct is None:
             self._config_struct = config
-        self._config_view()
-        self._update_config(self._config_struct)
 
     def _config_view(self):
 
-        self._view.add_control_btn(self.BTN_SAVE, self.labels[self.BTN_SAVE], self.MAIN_FIELD, self.save_config)
-        self._view.add_control_combobox(self.CONFIG_SWITCH, self.MAIN_FIELD, self.change_config, self._configs)
+        align_right = self._view.alignment_right
+        align_left = self._view.alignment_left
+        align_top = self._view.alignment_top
+        align_bottom = self._view.alignment_bottom
 
-        self._view.add_field(self.COMMON_PARAMS, self.labels[self.COMMON_PARAMS], self.MAIN_FIELD, None)
-        self._view.add_field(self.FILTERS, self.labels[self.FILTERS], self.MAIN_FIELD, None)
-        self._view.add_field(self.ACTIONS, self.labels[self.ACTIONS], self.MAIN_FIELD, None)
+        self._view.add_field(self.TOOLS_FIELD, None, self.MAIN_FIELD, 'h')
+        self._view.add_field(self.COMMON_PARAMS, self.labels[self.COMMON_PARAMS], self.MAIN_FIELD, 'f', None)
+        self._view.add_field(self.FILTERS_CONTROL_FIELD, None, self.MAIN_FIELD, 'h')
+        self._view.add_field(self.SETTINGS_FIELD, None, self.MAIN_FIELD, 'h')
 
-        self._view.add_control_btn(self.BTN_START, self.labels[self.BTN_START], self.MAIN_FIELD, self.prepare_data, None)
+        self._view.add_control_btn(self.BTN_START, self.labels[self.BTN_START], self.TOOLS_FIELD, self.prepare_data,
+                                   align_left)
+        self._view.add_control_btn(self.BTN_SAVE, self.labels[self.BTN_SAVE], self.TOOLS_FIELD, self.save_config, align_left)
+        self._view.add_control_btn(self.BTN_ADD_CONF, self.labels[self.BTN_ADD_CONF], self.TOOLS_FIELD, self.add_config, align_left)
+        self._view.add_control_combobox(self.CONFIG_SWITCH, self.TOOLS_FIELD, self.change_config, self._configs, align_left)
 
-        self._view.add_path_edit(self.INPUT_DIR, self.labels[self.INPUT_DIR], self.COMMON_PARAMS, None)
-        self._view.add_counter(self.TOTAL_IMAGES, self.labels[self.TOTAL_IMAGES], self.COMMON_PARAMS, 0, 10 ** 6)
-        self._view.add_counter(self.THREADS, self.labels[self.THREADS], self.COMMON_PARAMS, 0, 12)
+        self._view.add_label('', 'Текущие настройки:', self.FILTERS_CONTROL_FIELD, align_left)
+        self._view.add_control_combobox(self.FILTERS_SWITCH, self.FILTERS_CONTROL_FIELD, self.change_filters,
+                                        [str(num) for num in range(self._filters_num)], align_left)
+        self._view.add_control_btn(self.BTN_ADD_FILTERS, self.labels[self.BTN_ADD_FILTERS], self.FILTERS_CONTROL_FIELD,
+                                   self.add_filters, align_left)
 
-        self._view.add_control_combobox(self.FILTERS_SWITCH, self.FILTERS, self.change_filters, [str(num) for num in range(self._filters_num)])
-        self._view.add_combobox(self.FORMAT, self.labels[self.FORMAT], self.FILTERS, self.allowed_params[self.FORMAT], None)
-        self._view.add_wdg_many_fields(self.SIZE, self.labels[self.SIZE], self.FILTERS, 2, 0, 10 ** 4)
-        self._view.add_line_edit(self.NAME, self.labels[self.NAME], self.FILTERS)
-        self._view.add_memory_counter(self.WEIGHT, self.labels[self.WEIGHT], self.FILTERS, None)
-        self._view.add_combobox(self.EXTENSION, self.labels[self.EXTENSION], self.FILTERS, self.allowed_params[self.EXTENSION], None)
-        self._view.add_counter(self.NUMBER_MULTIPLICITY, self.labels[self.NUMBER_MULTIPLICITY], self.FILTERS, 0, 10 ** 3)
-        self._view.add_counter(self.PREPARED, self.labels[self.PREPARED], self.FILTERS, 0, 10 ** 6)
-        self._view.add_line_edit(self.CONTENT, self.labels[self.CONTENT], self.FILTERS, None)
+        self._view.add_field(self.FILTERS, self.labels[self.FILTERS], self.SETTINGS_FIELD, 'f', None)
+        self._view.add_field(self.ACTIONS, self.labels[self.ACTIONS], self.SETTINGS_FIELD, 'f', None)
+        self._view.add_field(self.CONTROL_FIELD, None, self.MAIN_FIELD, 'h')
 
-        self._view.add_wdg_many_fields(self.RESIZE, self.labels[self.RESIZE], self.ACTIONS, 2, 0, 10 ** 4)
-        self._view.add_wdg_many_fields(self.CROP, self.labels[self.CROP], self.ACTIONS, 4, 0, 10 ** 4)
-        self._view.add_combobox(self.REFORMAT, self.labels[self.REFORMAT], self.ACTIONS, self.allowed_params[self.REFORMAT], None)
-        self._view.add_switch(self.SAVE, self.labels[self.SAVE], self.ACTIONS, True, None)
-        self._view.add_switch(self.DELETE, self.labels[self.DELETE], self.ACTIONS, False, None)
-        self._view.add_path_edit(self.OUTPUT_DIR, self.labels[self.OUTPUT_DIR], self.ACTIONS, None)
+        self._view.add_text_shower(self.TEXT_SHOWER, '', self.CONTROL_FIELD, align_left)
+
+        self._view.add_path_edit(self.INPUT_DIR, self.labels[self.INPUT_DIR], self.COMMON_PARAMS, align_left)
+        self._view.add_counter(self.TOTAL_IMAGES, self.labels[self.TOTAL_IMAGES], self.COMMON_PARAMS, 0, 10 ** 6, align_left)
+        self._view.add_counter(self.THREADS, self.labels[self.THREADS], self.COMMON_PARAMS, 1, 12, align_left)
+
+        self._view.add_combobox(self.FORMAT, self.labels[self.FORMAT], self.FILTERS, self.allowed_params[self.FORMAT], align_left)
+        self._view.add_line_edit(self.NAME, self.labels[self.NAME], self.FILTERS, align_left)
+        self._view.add_combobox(self.EXTENSION, self.labels[self.EXTENSION], self.FILTERS, self.allowed_params[self.EXTENSION], align_left)
+        self._view.add_counter(self.NUMBER_MULTIPLICITY, self.labels[self.NUMBER_MULTIPLICITY], self.FILTERS, 1, 10 ** 3, align_left)
+        self._view.add_counter(self.PREPARED, self.labels[self.PREPARED], self.FILTERS, 0, 10 ** 6, align_left)
+        self._view.add_line_edit(self.CONTENT, self.labels[self.CONTENT], self.FILTERS, align_left)
+        self._view.add_memory_counter(self.WEIGHT, self.labels[self.WEIGHT], self.FILTERS, align_left)
+        self._view.add_wdg_many_fields(self.SIZE, self.labels[self.SIZE], self.FILTERS, 2, 0, 10 ** 4, align_left)
+
+        self._view.add_wdg_many_fields(self.RESIZE, self.labels[self.RESIZE], self.ACTIONS, 2, 0, 10 ** 4, align_left)
+        self._view.add_wdg_many_fields(self.CROP, self.labels[self.CROP], self.ACTIONS, 4, 0, 10 ** 4, align_left)
+        self._view.add_combobox(self.REFORMAT, self.labels[self.REFORMAT], self.ACTIONS, self.allowed_params[self.REFORMAT], align_left)
+        self._view.add_path_edit(self.OUTPUT_DIR, self.labels[self.OUTPUT_DIR], self.ACTIONS, align_left)
+        self._view.add_switch(self.SAVE, self.labels[self.SAVE], self.ACTIONS, True, align_left)
+        self._view.add_switch(self.DELETE, self.labels[self.DELETE], self.ACTIONS, False, align_left)
 
     def _get_view_data(self, config_: ConfigStruct) -> ConfigStruct:
         """Get data from View."""
@@ -198,11 +239,13 @@ class LogicManager(Presenter):
     def change_filters(self, filters_num: int):
         # ToDo: внимание! предполагается что конфиг уже отвалидирован (валидируется после каждого завершения редактирования поля)
         print(f'Filters: {self._filters_num}, Filter: {filters_num}')
+
         self._model.save_config(self._config_name, self._filters_now, self._config_struct)
         self._config_struct = self._model.get_config(self._config_name, filters_num)
         self._filters_now = filters_num
 
         self._update_config(self._config_struct)
+        self._view.insert_control_combobox(self.FILTERS_SWITCH, str(filters_num))
 
     def change_config(self, num: int):
         print(f'New config: {num}')
@@ -215,6 +258,23 @@ class LogicManager(Presenter):
     def save_config(self):
         self._config_struct = self._get_view_data(self._config_struct)
         self._model.save_config(self._config_name, self._filters_now, self._config_struct)
+
+    def add_config(self):
+        name = self._view.show_input_dialog_window(self.ADD_CONF_TITLE)
+        if name:
+            if name in self._configs:
+                self._view.show_errors(self.MAIN_FIELD)
+            else:
+                self._model.add_config(name)
+                self._update_configs_data()
+                self._view.insert_control_combobox(self.CONFIG_SWITCH, name)
+                self.change_config(self._configs.index(name))
+                self._config_name = name
+
+    def add_filters(self):
+        self._model.add_filters(self._config_name)
+        self._update_configs_data()
+        self._view.insert_control_combobox(self.FILTERS_SWITCH, str(self._filters_num - 1))
 
     def _update_config(self, config_: dict):
         for wdg_key in config_:

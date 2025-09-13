@@ -150,6 +150,7 @@ class QInpIntFields(InputWidget, QManyIntField):
             values.append(self.value(idx))
         return values
 
+
 class QInpCheckBox(InputWidget, QCheckBox):
 
     def __init__(self, state: bool):

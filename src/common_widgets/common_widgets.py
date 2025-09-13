@@ -35,26 +35,27 @@ class QManyField(QWidget):
             wdg_sep = QLabel(self._separator)
             wdg_field = QLineEdit()
 
-            main_layout.addWidget(wdg_sep, Align.AlignLeft)
-            main_layout.addWidget(wdg_field, Align.AlignLeft)
+            main_layout.addWidget(wdg_sep, 1, Align.AlignLeft)
+            main_layout.addWidget(wdg_field, 1, Align.AlignLeft)
             self._widgets.append(wdg_field)
             self._separators.append(wdg_sep)
 
         self.setLayout(main_layout)
 
-    def insert(self, idx: int, value: str):
+    def _check_idx(self, idx: int):
         if idx >= self._fields:
             raise IndexError(f"Widget index must be less than num of the fields ({self._fields}). Your widget index = {idx}")
+
+    def insert(self, idx: int, value: str):
+        self._check_idx(idx)
         self._widgets[idx].insert(value)
 
     def clear(self, idx: int):
-        if idx >= self._fields:
-            raise IndexError(f"Widget index must be less than num of the fields ({self._fields}). Your widget index = {idx}")
+        self._check_idx(idx)
         self._widgets[idx].clear()
 
     def value(self, idx: int) -> str:
-        if idx >= self._fields:
-            raise IndexError(f"Widget index must be less than num of the fields ({self._fields}). Your widget index = {idx}")
+        self._check_idx(idx)
         return self._widgets[idx].text()
 
     def set_separator(self, separator: str):
@@ -63,8 +64,7 @@ class QManyField(QWidget):
             lbl.setText(self._separator)
 
     def setValidator(self, widget_idx: int, validator: QValidator):
-        if widget_idx >= self._fields:
-            raise IndexError(f"Widget index must be less than num of the fields ({self._fields}). Your widget index = {widget_idx}")
+        self._check_idx(widget_idx)
         self._widgets[widget_idx].setValidator(validator)
 
     @property
@@ -80,6 +80,7 @@ class QManyIntField(QManyField):
     def _place_widgets(self):
         main_layout = QHBoxLayout()
         wdg_field = QSpinBox()
+        wdg_field.setValue(0)
         wdg_field.setMinimum(self._min_value)
         wdg_field.setMaximum(self._max_value)
         main_layout.addWidget(wdg_field, Align.AlignLeft)
@@ -90,22 +91,24 @@ class QManyIntField(QManyField):
             wdg_field = QSpinBox()
             wdg_field.setMinimum(self._min_value)
             wdg_field.setMaximum(self._max_value)
-            main_layout.addWidget(wdg_sep, Align.AlignLeft)
-            main_layout.addWidget(wdg_field, Align.AlignLeft)
+            main_layout.addWidget(wdg_sep, alignment=Align.AlignCenter)
+            main_layout.addWidget(wdg_field, alignment=Align.AlignLeft)
             self._widgets.append(wdg_field)
             self._separators.append(wdg_sep)
 
         self.setLayout(main_layout)
 
     def insert(self, idx: int, value: int):
-        if idx >= self._fields:
-            raise IndexError(f"Widget index must be less than num of the fields ({self._fields}). Your widget index = {idx}")
+        self._check_idx(idx)
         self._widgets[idx].setValue(int(value))
 
     def value(self, idx: int) -> int:
-        if idx >= self._fields:
-            raise IndexError(f"Widget index must be less than num of the fields ({self._fields}). Your widget index = {idx}")
+        self._check_idx(idx)
         return self._widgets[idx].value()
+
+    def clear(self, idx: int):
+        self._check_idx(idx)
+        self._widgets[idx].setValue(0)
 
 
 class QPathEdit(QWidget):
@@ -139,7 +142,9 @@ class QPathEdit(QWidget):
             path = filedialog.getExistingDirectoryUrl()
         else:
             path = filedialog.getOpenFileUrl()
-        self._main_edit.insert(path[0].path())
+
+        if path:
+            self._main_edit.setText(path.path())
 
     def insert(self, text: str):
         self._main_edit.insert(text)
@@ -160,7 +165,7 @@ class QLineEditComboBox(QWidget):
     :param values: values for QComboBox.
     """
 
-    def __init__(self, field=QLineEdit, values: tp.Sequence[str] = ()):
+    def __init__(self, field=QSpinBox, values: tp.Sequence[str] = ()):
         super().__init__()
         self._values = values
         self._field = field
@@ -185,10 +190,10 @@ class QLineEditComboBox(QWidget):
     def values(self) -> tp.Sequence:
         return self._values
 
-    def insert(self, text: str, value: str):
+    def insert(self, text: int, value: str):
         if value not in self._values:
             raise ValueError(f'Unknown value {value}. Value must be contained in values of this widget.')
-        self._wdg_edit.insert(text)
+        self._wdg_edit.setValue(int(text))
         self._wdg_combobox.setCurrentText(value)
 
     def clear(self):

@@ -353,21 +353,21 @@ if __name__ == '__main__':
             Preparer([{'input_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir', 'total_images': (0, 10), 'threads': 1,
                    'filters': #-----------------------------------------------------------------------------------------
                          [
-                          {'format': '',
-                            'size': '',
-                            'weight': '',
-                            'name': '',
-                            'extension': '',
-                            'number_multiplicity': '',
+                          {'format': 'JPEG',
+                            'size': (((10, '>'), (10, '>')),),
+                            'weight': ((10, '>'),),
+                            'name': (('s*sss', True),),
+                            'extension': 'jpeg',
+                            'number_multiplicity': (1, 2, 3, 4, 5),
                             'content': 'I',
                             'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
-                                {'resize': '',
-                                 'crop': '',
-                                 'reformat': '',
+                                {'resize': (110, 100),
+                                 'crop': (110, 25, 24, 12),
+                                 'reformat': 'PNG',
                                  'rename': f'{random.randint(100, 315)}<total_num>-jpg',
                                  'save': True,
-                                 'delete': True,
+                                 'delete': False,
                                  'output_dir': r'C:\Users\filat\OneDrive\Документы\Проект\target_dir'}}
                                            ]}])
 
