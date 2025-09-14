@@ -67,6 +67,10 @@ class View:
         pass
 
     @abstractmethod
+    def bind_widgets(self, widgets: tuple[str], binding: str):
+        pass
+
+    @abstractmethod
     def add_field(self, key: str, label: str | None, field: str, type_: str = 'v', tooltip: str | None = None):
         """
         Add field named key to field.
@@ -166,6 +170,10 @@ class View:
 
     @abstractmethod
     def apply_style(self, widget: str, style: str):
+        pass
+
+    @abstractmethod
+    def apply_main_style(self, style: str):
         pass
 
     def set_presenter(self, presenter: 'Presenter' = None):

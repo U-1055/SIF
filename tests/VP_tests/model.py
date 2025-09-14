@@ -64,3 +64,9 @@ class TestModel(Model):
     @property
     def config_name(self) -> str:
         return self._config_name
+
+    def get_style(self, style_name: str) -> str:
+        style_path = r"C:\Users\filat\PycharmProjects\NNFCV\data\gui_data\styles\light_theme.qss"
+        if Path(style_path).is_file():
+            with open(style_path) as style:
+                return style.read()

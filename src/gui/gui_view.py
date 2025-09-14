@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QPushButton, QVBoxLayout, QFormLayout, QComboBox, QLayout, QInputDialog, QHBoxLayout, QTextEdit, QLabel
+from PySide6.QtWidgets import QMainWindow, QWidget, QPushButton, QVBoxLayout, QFormLayout, QComboBox, QLayout, QInputDialog, QHBoxLayout, QTextEdit, QLabel, QFrame
 from PySide6.QtGui import Qt
 import typing as tp
 
@@ -110,11 +110,14 @@ class MainWindow(QMainWindow, View):
         control_cbox = inp.QInpComboBox(values)
         control_cbox.currentIndexChanged.connect(command)
 
+        if tooltip:
+            control_cbox.setToolTip(tooltip)
+
         self._wdg_data[key] = control_cbox
         self._wdg_data[field].addWidget(control_cbox)
 
     def add_switch(self, key: str, label: str, field: str, state: bool, alignment: Align, tooltip: str | None = None):
-        self._add_widget(key, inp.QInpCheckBox(state), label, field, alignment)
+        self._add_widget(key, inp.QInpCheckBox(state), label, field, alignment, tooltip)
 
     def add_text_shower(self, key: str, label: str, field: str, alignment: Align, tooltip: str | None = None):
         wdg_text = QTextEdit()
@@ -148,6 +151,12 @@ class MainWindow(QMainWindow, View):
     def get(self, widget: str) -> str: pass
     def get(self, widget: str) -> tuple:
         return self._wdg_data[widget].get()
+
+    def apply_style(self, widget: str, style: str):
+        self._wdg_data[widget].setStyleSheet(style)
+
+    def apply_main_style(self, style: str):
+        self.setStyleSheet(style)
 
     @property
     def alignment_left(self):

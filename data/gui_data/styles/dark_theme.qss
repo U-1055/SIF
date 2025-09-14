@@ -1,0 +1,74 @@
+
+QWidget {
+    background-color: #262B2B;
+}
+
+QPushButton {
+    background-color: #1F387A;
+    color: white;
+    font-size: 12px;
+    border: 1px solid #FFFFFF;
+    border-radius: 5;
+}
+
+QPushButton#start_button {
+    background-color: #1F387A;
+    color: white;
+    font-size: 12px;
+}
+
+QLineEdit {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+QSpinBox {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+QComboBox {
+    background-color: #000000;
+    color: #FFFFFF;
+    border-radius: 3;
+}
+
+QComboBox QAbstractItemView{
+    background-color: black;
+    color: white;
+    selection-background-color: #525252;
+}
+
+QComboBox QAbstractItemView::item{
+    background-color: black;
+    color: white;
+    selection-background-color: #525252;
+}
+
+QComboBox QAbstractItemView::item::selected{
+    background-color: #1F387A;
+    border: 1px solid gray;
+}
+
+QScrollBar::vertical{
+    background-color: #1F387A;
+    border: 2px solid gray;
+}
+
+QLabel {
+    background-color: #262B2B;
+    color: #FFFFFF;
+}
+
+QTextEdit {
+    background-color: black;
+    color: #FFFCCF;
+    border: 1px solid white;
+    border-radius: 3;
+}
+
+QPushButton::pressed {
+    background-color: #13224A;
+    color: white;
+    font: 12 px;
+}

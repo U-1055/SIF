@@ -175,7 +175,7 @@ class QInpCheckBox(InputWidget, QCheckBox):
     def clear(self):
         self.setChecked(self._state)
 
-
+    
 class QInpPathEdit(InputWidget, QPathEdit):
 
     def __init__(self):
@@ -218,3 +218,5 @@ class QInpMemoryEditComboBox(InputWidget, QLineEditComboBox):
 
     def clear_widget(self):
         self.clear()
+
+

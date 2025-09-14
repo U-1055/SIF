@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QPushButton, QApplication
+from PySide6.QtGui import QIcon
 
 import pathlib
 
@@ -11,7 +12,7 @@ from tests.VP_tests.model import TestModel
 
 def init_view(view: QMainWindow):
 
-    view.setWindowTitle('NNFCV')
+    view.setWindowTitle('FCV')
 
     screen = view.screen()
 
@@ -43,6 +44,11 @@ if __name__ == '__main__':
     root = MainWindow()
     init_view(root)
     path = pathlib.Path('..', '..', 'data', 'test_data', 'configs')
+
+    icon = QIcon(r"C:\Users\filat\PycharmProjects\NNFCV\data\gui_data\icons\logo.ico")
+    app.setWindowIcon(icon)
+    root.setWindowIcon(icon)
+
     model = TestModel(path, config)
     presenter = LogicManager({}, model, root)
     root.set_presenter(presenter)
