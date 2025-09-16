@@ -8,81 +8,128 @@ import gui_const as const
 
 class Saver(Model):
 
-    def __init__(self, path: Path, config_example: ConfigStruct, filters: str, actions: str):
-        super().__init__(path, config_example)
+    def __init__(self, path: Path, config_example: ConfigStruct, filters: str, actions: str, style_table: dict):
+        super().__init__(path, config_example, filters, actions, style_table)
+        self._config_example = config_example
+
         self._path: path
         self._info = 'info.json'
         self._main_data = 'main_data'
-        self._base = 'configs'
+        self._configs = 'configs'
         self._gui_data = 'gui_data'
         self._styles = 'styles'
+        self._last_style = 'last_style'
         self._last_config = 'last_config'
-        self._filters, self._actions = filters, actions
+        self._icons = 'icons'
 
-        with shv.open(Path(self._path, self._main_data, self._base), 'w') as file:
-            file['config#1'] = config_example
+        self._configs_path: Path = Path(self._path, self._main_data, self._configs)
+        self._info_path: Path = Path(self._path, self._main_data, self._info)
+        self._styles_path: Path = Path(self._path, self._gui_data, self._styles)
+        self._icons_path: Path = Path(self._path, self._gui_data, self._icons)
+
+        self._filters, self._actions = filters, actions
+        self._style_table = style_table
+
+    def _restore_info_file(self):
+        if self._info_path.is_file():
+            with open(self._info_path) as info:
+                json.dump(
+                    {
+                    self._last_config: '',
+                    self._last_style: '',
+                    self._filters: ''
+                },
+                info)
 
     def _update_info(self):
         pass
 
     def _get_last_config_name(self):
-        configs = tuple(config.name for config in self._path.iterdir())
         with open(Path(self._path, self._main_data, self._info), 'rb') as file:
             config_data = json.load(file)
-        if config_data[self._last_config] in configs:
-            return config_data[self._last_config]
-        else:
-            return configs[0]
+
+        with shv.open(str(self._configs_path), 'r') as configs:
+            if config_data[self._last_config] in configs:
+                return config_data[self._last_config]
+            else:
+                return list(configs.keys())[0]
 
     def _get_full_config(self, config_name: str) -> ConfigStruct:
-        with open(Path(self._path, self._main_data, self._base), 'r') as config_file:
-            return json.load(config_file)
+        with shv.open(str(self._configs_path)) as configs:
+            if config_name in configs:
+                return configs[config_name]
+
+    def _set_current_config(self, config_name: str):
+        """Set the name of the last config."""
+        with open(self._info_path) as info:
+            info_data = json.load(info)
+        with shv.open(str(self._configs_path), 'r') as configs:
+            if config_name in configs:
+                info_data[self._last_config] = config_name
+
+    def change_style(self, style_name: str):
+        with open(self._info_path, 'rb') as info:
+            info_data = json.load(info)
+        info_data[self._last_style] = style_name
+        with open(self._info_path, 'w') as info:
+            json.dump(info_data, info)
 
     def get_config(self, config_name: str, filter_num: int) -> ConfigStruct:
-        """Возвращает текущий конфиг с фильтром по заданному номеру."""
+        """Returns the config by given name with filter by given number."""
         config = self._get_full_config(config_name)
-        config[const.FILTERS] = [config[const.FILTERS][filter_num]]
+        config[self._filters] = [config[self._filters][filter_num]]
         return config
 
     def save_config(self, config_name: str, filter_num: int, config: ConfigStruct):
         """Сохраняет конфиг под заданным именем."""
         full_config = self._get_full_config(config_name)
-        full_config[const.FILTERS][filter_num] = config[const.FILTERS][0]
+        full_config[self._filters][filter_num] = config[self._filters][0]
 
-        with open(Path(self._path, config_name), 'w') as config_file:
-            json.dump(full_config, config_file)
+        for key in full_config:
+            if key in config and key != const.FILTERS:
+                full_config[key] = config[key]
+
+        with shv.open(str(self._configs_path), 'w') as configs:
+            configs[config_name] = full_config
 
     def add_config(self, config_name: str):
-        with open(Path(self._path, config_name), 'w') as config_file:
-            json.dump(self._config_example, config_file)
+        with shv.open(str(self._configs_path), 'w') as config_file:
+            config_file[config_name] = self._config_example
 
     def add_filters(self, config_name: str):
-        with open(Path(self._path, config_name)) as config_file:
-            config: ConfigStruct = json.load(config_file)
+        with shv.open(str(self._configs_path), 'r') as configs:
+            config = configs[config_name]
+            config[self._filters].append(self._config_example[self._filters][0])
 
-        config[const.FILTERS].append(self._config_example[const.FILTERS][0])
-
-        with open(Path(self._path, config_name), 'w') as config_file:
-            json.dump(config, config_file)
+        with shv.open(str(self._configs_path), 'w') as configs:
+            configs[config_name] = config
 
     def get_config_data(self):
-        configs = tuple(config.name for config in self._path.iterdir())
-        with open(Path(self._path, configs[2])) as config_file:
-            config = json.load(config_file)
+        with shv.open(str(self._configs_path), 'r') as configs:
+            last_config_name = self._get_last_config_name()
 
-        return {
-            const.CONFIG_NAME: configs[2],
-            const.FILTERS: len(config[const.FILTERS]),
-            const.CONFIGS_LIST: configs
-        }
+            return {
+                const.CONFIG_NAME: last_config_name,
+                self._filters: len(configs[last_config_name][self._filters]),
+                const.CONFIGS_LIST: tuple(configs.keys())
+            }
 
     @property
     def config_name(self) -> str:
-        return self._config_name
+        return self._get_last_config_name()
+
+    @property
+    def current_style(self) -> str:
+        with open(self._info_path) as info:
+            return json.load(info)[self._last_style]
 
     def get_style(self, style_name: str) -> str:
-        style_path = r"C:\Users\filat\PycharmProjects\NNFCV\data\gui_data\styles\light_theme.qss"
+        style_path = Path(self._styles_path, self._style_table[style_name])
         if Path(style_path).is_file():
-            with open(style_path) as style:
-                return style.read()
+            with open(style_path) as style_file:
+                style = style_file.read()
+            with open(self._info_path, 'rb') as info:
+                info_data = json.load(info)
+                info_data[self._last_style] = style_name
+            return style
 

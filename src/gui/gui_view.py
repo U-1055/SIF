@@ -98,7 +98,7 @@ class MainWindow(QMainWindow, View):
     def add_line_edit(self, key: str, label: str, field: str, alignment: Align, tooltip: str | None = None):
         self._add_widget(key, inp.QInpLineEdit(), label, field, alignment, tooltip)
 
-    def add_control_btn(self, key: str, label: str, field: str, command: tp.Callable, alignment: Align, tooltip: str | None = None):
+    def add_control_btn(self, key: str, label: str, field: str, command: tp.Callable, alignment: Align = Align.AlignCenter, tooltip: str | None = None):
         btn_control = QPushButton(label)
         btn_control.clicked.connect(command)
         if tooltip:

@@ -169,11 +169,11 @@ class View:
         pass
 
     @abstractmethod
-    def apply_style(self, widget: str, style: str):
+    def apply_main_style(self, style: str):
         pass
 
     @abstractmethod
-    def apply_main_style(self, style: str):
+    def apply_style(self, widget: str, style: str):
         pass
 
     def set_presenter(self, presenter: 'Presenter' = None):
@@ -214,9 +214,10 @@ class View:
         """Returns value of bottom alignment flag for this View."""
         pass
 
+
 class Model:
 
-    def __init__(self, path: pathlib.Path, config_example: ConfigStruct):
+    def __init__(self, path: pathlib.Path, config_example: ConfigStruct, filters: str, actions: str, style_table: dict):
         self._is_log: bool = False
         self._config_name: str = self._get_config_name()
         self._config_example = config_example
@@ -260,6 +261,16 @@ class Model:
     def get_style(self, style_name: str) -> str:
         """Возвращает строку стиля QSS."""
 
+    @abstractmethod
+    def change_style(self, style_name):
+        """Writes last style's name to the info file."""
+        pass
+
+    @property
+    @abstractmethod
+    def current_style(self) -> str:
+        pass
+
     def create_writing(self):
         """Создаёт новый лог обработки."""
         self._is_log = True
@@ -275,7 +286,7 @@ class Model:
 
 
 class Presenter:
-    def __init__(self, model: Model = None, view: View = None):
+    def __init__(self, validation_params: dict, styles_table: tuple, model=None, view=None):
         self._model: Model = model
         self._view: View = view
         self._config_struct: ConfigStruct = config

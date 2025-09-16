@@ -84,8 +84,7 @@ QTextEdit {
 }
 
 QPushButton::pressed {
-    background-color: #13224A;
-    color: black;
+    background-color: #33E6FF;
     font: 12 px;
 }
 

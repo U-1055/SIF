@@ -6,7 +6,7 @@ import pathlib
 from gui_view import MainWindow
 from gui_model import Saver
 from gui_presenter import LogicManager
-from interfaces import Presenter, View, config
+from interfaces import Presenter, View, config, Model
 from tests.VP_tests.model import TestModel
 
 
@@ -38,19 +38,35 @@ def init_view(view: QMainWindow):
 
     view.show()
 
+def launch(model, view, presenter):
+    """
+    Точка входа в программу.
+    :param model: класс Модели.
+    :param view: класс Представления.
+    :param presenter: класс Презентера.
+    """
+    import gui_const as const
 
-if __name__ == '__main__':
     app = QApplication()
-    root = MainWindow()
+    root = view()
     init_view(root)
-    path = pathlib.Path('..', '..', 'data', 'test_data', 'configs')
+    path = pathlib.Path('..', '..', 'data')
 
     icon = QIcon(r"C:\Users\filat\PycharmProjects\NNFCV\data\gui_data\icons\logo.ico")
     app.setWindowIcon(icon)
     root.setWindowIcon(icon)
 
-    model = TestModel(path, config)
-    presenter = LogicManager({}, model, root)
+    model = model(path, config, 'filters', 'actions', const.styles)
+    presenter = presenter({}, const.styles, model, root)
     root.set_presenter(presenter)
 
     app.exec()
+
+
+if __name__ == '__main__':
+    try:
+        launch(Saver, MainWindow, LogicManager)
+    except SystemExit:
+        raise
+    except:
+        raise

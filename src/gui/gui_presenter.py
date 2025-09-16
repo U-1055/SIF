@@ -11,6 +11,7 @@ class LogicManager(Presenter):
     TOOLS_FIELD = 'tools_field'
     SETTINGS_FIELD = 'settings_field'
     CONTROL_FIELD = 'control_field'
+    THEME_CHANGE_FIELD = 'theme_change_field'
 
     # ключи конфига
     INPUT_PARAMS = 3
@@ -43,6 +44,8 @@ class LogicManager(Presenter):
     BTN_ADD_CONF = 'btn_add_conf'
     BTN_ADD_FILTERS = 'btn_add_filters'
     BTN_DELETE = 'btn_delete'
+    BTN_LIGHT_THEME = 'btn_light_theme'
+    BTN_DARK_THEME = 'btn_dark_theme'
     TEXT_SHOWER = 'text_shower'
     CONFIG_SWITCH = 'config_switch'
     FILTERS_SWITCH = 'filters_switch'
@@ -100,7 +103,9 @@ class LogicManager(Presenter):
         CONFIG_SWITCH: 'Изменить конфиг',
         FILTERS_SWITCH: 'Изменить настройки',
         BTN_SAVE: 'Сохранить конфиг',
-        ADD_CONF_TITLE: 'Введите название нового конфига'
+        ADD_CONF_TITLE: 'Введите название нового конфига',
+        BTN_LIGHT_THEME: 'Светлая тема',
+        BTN_DARK_THEME: 'Тёмная тема'
     }
 
     tooltips = {
@@ -140,11 +145,7 @@ class LogicManager(Presenter):
         REFORMAT: (LBL_NONE, 'JPEG', 'PNG', 'BMP'),
     }
 
-    STYLE_ERROR = const.STYLE_ERROR
-    STYLE_LIGHT = const.STYLE_LIGHT
-    STYLE_DARK = const.STYLE_DARK
-
-    def __init__(self, validation_params: dict, model=None, view=None):
+    def __init__(self, validation_params: dict, styles_table: tuple, model=None, view=None):
         super().__init__(model, view)
         if model:
             self._model = model
@@ -152,11 +153,13 @@ class LogicManager(Presenter):
             self._view = view
             self.MAIN_FIELD = self._view.root_field
 
+        self.STYLE_LIGHT, self.STYLE_DARK, self.STYLE_ERR = styles_table
+
         self._validation_params: dict = validation_params
         self._config_name: str = self._model.config_name
         self._config_struct: ConfigStruct = self._model.get_config(self._config_name, self._filters_now)
 
-        self._current_style: str = self.STYLE_LIGHT
+        self._current_style: str = self._model.current_style
 
         self._update_configs_data()
         self._config_view()
@@ -176,6 +179,8 @@ class LogicManager(Presenter):
         align_left = self._view.alignment_left
         align_top = self._view.alignment_top
         align_bottom = self._view.alignment_bottom
+        light_style = self._model.get_style(self.STYLE_LIGHT)
+        dark_style = self._model.get_style(self.STYLE_DARK)
 
         self._view.apply_main_style(self._model.get_style(self._current_style))
 
@@ -183,6 +188,14 @@ class LogicManager(Presenter):
         self._view.add_field(self.COMMON_PARAMS, self.labels[self.COMMON_PARAMS], self.MAIN_FIELD, 'f', None)
         self._view.add_field(self.FILTERS_CONTROL_FIELD, None, self.MAIN_FIELD, 'h')
         self._view.add_field(self.SETTINGS_FIELD, None, self.MAIN_FIELD, 'h')
+        self._view.add_field(self.THEME_CHANGE_FIELD, '', self.TOOLS_FIELD, 'v')
+
+        self._view.add_control_btn(self.BTN_LIGHT_THEME, self.labels[self.BTN_LIGHT_THEME], self.THEME_CHANGE_FIELD,
+                                   lambda: self._change_theme(self.STYLE_LIGHT, light_style))
+        self._view.add_control_btn(self.BTN_DARK_THEME, self.labels[self.BTN_DARK_THEME], self.THEME_CHANGE_FIELD,
+                                   lambda: self._change_theme(self.STYLE_DARK, dark_style))
+        self._view.apply_style(self.BTN_LIGHT_THEME, light_style)
+        self._view.apply_style(self.BTN_DARK_THEME, dark_style)
 
         self._view.add_control_btn(self.BTN_START, self.labels[self.BTN_START], self.TOOLS_FIELD, self.prepare_data,
                                    align_left)
@@ -191,7 +204,7 @@ class LogicManager(Presenter):
         self._view.add_control_combobox(self.CONFIG_SWITCH, self.TOOLS_FIELD, self.change_config, self._configs, align_left,
                                         self.tooltips[self.CONFIG_SWITCH])
 
-        self._view.add_label('', 'Текущие настройки:', self.FILTERS_CONTROL_FIELD, align_left)
+        self._view.add_label('settings_lbl', 'Текущие настройки:', self.FILTERS_CONTROL_FIELD, align_left)
         self._view.add_control_combobox(self.FILTERS_SWITCH, self.FILTERS_CONTROL_FIELD, self.change_filters,
                                         [str(num) for num in range(self._filters_num)], align_left, self.tooltips[self.FILTERS_SWITCH])
         self._view.add_control_btn(self.BTN_ADD_FILTERS, self.labels[self.BTN_ADD_FILTERS], self.FILTERS_CONTROL_FIELD,
@@ -209,7 +222,7 @@ class LogicManager(Presenter):
 
         self._view.add_combobox(self.FORMAT, self.labels[self.FORMAT], self.FILTERS, self.allowed_params[self.FORMAT], align_left, self.tooltips[self.FORMAT])
         self._view.add_line_edit(self.NAME, self.labels[self.NAME], self.FILTERS, align_left, self.tooltips[self.NAME])
-        self._view.add_combobox(self.EXTENSION, self.labels[self.EXTENSION], self.FILTERS, self.allowed_params[self.EXTENSION], align_left, self.tooltips[self.EXTENSION])
+        self._view.add_line_edit(self.EXTENSION, self.labels[self.EXTENSION], self.FILTERS, align_left, self.tooltips[self.EXTENSION])
         self._view.add_counter(self.NUMBER_MULTIPLICITY, self.labels[self.NUMBER_MULTIPLICITY], self.FILTERS, 1, 10 ** 3, align_left, self.tooltips[self.NUMBER_MULTIPLICITY])
         self._view.add_counter(self.PREPARED, self.labels[self.PREPARED], self.FILTERS, 0, 10 ** 6, align_left, self.tooltips[self.PREPARED])
         self._view.add_line_edit(self.CONTENT, self.labels[self.CONTENT], self.FILTERS, align_left, self.tooltips[self.CONTENT])
@@ -222,6 +235,10 @@ class LogicManager(Presenter):
         self._view.add_path_edit(self.OUTPUT_DIR, self.labels[self.OUTPUT_DIR], self.ACTIONS, align_left, self.tooltips[self.OUTPUT_DIR])
         self._view.add_switch(self.SAVE, self.labels[self.SAVE], self.ACTIONS, True, align_left, self.tooltips[self.SAVE])
         self._view.add_switch(self.DELETE, self.labels[self.DELETE], self.ACTIONS, False, align_left, self.tooltips[self.DELETE])
+
+    def _change_theme(self, style_name: str, style: dict):
+        self._model.change_style(style_name)
+        self._view.apply_main_style(style)
 
     def _get_view_data(self, config_: ConfigStruct) -> ConfigStruct:
         """Get data from View."""

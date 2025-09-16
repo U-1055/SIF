@@ -138,9 +138,9 @@ STYLE_DARK = 'dark_theme'
 STYLE_LIGHT = 'light_style'
 
 styles = {
-    STYLE_ERROR: 'error_theme.qss',
     STYLE_LIGHT: 'light_theme.qss',
-    STYLE_DARK: 'dark_theme.qss'
+    STYLE_DARK: 'dark_theme.qss',
+    STYLE_ERROR: 'error_theme.qss'
 }
 
 if __name__ == '__main__':
