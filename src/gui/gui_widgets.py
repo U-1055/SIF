@@ -1,10 +1,11 @@
 import abc
 
-from PySide6.QtWidgets import QWidget, QLineEdit, QSpinBox, QComboBox, QCheckBox
+from PySide6.QtWidgets import QWidget, QLineEdit, QSpinBox, QComboBox, QCheckBox, QHBoxLayout
 from abc import abstractmethod
 import typing as tp
 
-from src.common_widgets.common_widgets import QManyField, QPathEdit, QLineEditComboBox, QManyIntField
+from src.common_widgets.common_widgets import QManyField, QPathEdit, QLineEditComboBox, QManyIntField, QSpinboxComboBox, QWidgetComboBoxComboBox
+import gui_const as const
 
 
 class InputWidget:
@@ -202,9 +203,13 @@ class QInpMemoryEditComboBox(InputWidget, QLineEditComboBox):
     measurement_units: tuple = ('Б', 'КБ', 'МБ', 'ГБ')
 
     def __init__(self):
-        super().__init__(QSpinBox, self.measurement_units)
+        spin_box = QSpinBox()
+        spin_box.setMinimum(1)
+        spin_box.setMaximum(999)
 
-    def get(self):
+        super().__init__(spin_box, self.measurement_units)
+
+    def get(self) -> int:
         num, num_unit = self.value()
         for i, unit in enumerate(self.measurement_units):
 
@@ -220,3 +225,48 @@ class QInpMemoryEditComboBox(InputWidget, QLineEditComboBox):
         self.clear()
 
 
+class QInpWeightEdit(QWidgetComboBoxComboBox, InputWidget):
+
+    def __init__(self):
+        super().__init__(QInpMemoryEditComboBox(), (const.EQUAL, const.MORE, const.LESS))
+
+    def get(self) -> tuple[tuple[int, str], str]:
+        return self.value()
+
+    def insert_data(self, input_: tuple[tuple[int, str], str]):
+        self.insert(input_[0], input_[1])
+
+    def clear_widget(self):
+        self.clear()
+
+
+class QInpResolutionEdit(InputWidget, QWidget):
+
+    def __init__(self, min_: int = 0, max_: int = 8192):
+        super().__init__()
+        self._min, self._max = min_, max_
+        self._widgets: list[QSpinboxComboBox] = []
+        self._place_widgets()
+
+    def _place_widgets(self):
+        self._main_layout = QHBoxLayout()
+        for _ in range(2):
+            wdg_size_edit = QSpinBox()
+            wdg_size_edit.setMinimum(self._min)
+            wdg_size_edit.setMaximum(self._max)  # 2 ** 13 = 8192, 8k resolution
+
+            wdg_dimension_edit = QSpinboxComboBox(wdg_size_edit, (const.EQUAL, const.MORE, const.LESS))
+            self._main_layout.addWidget(wdg_dimension_edit)
+            self._widgets.append(wdg_dimension_edit)
+        self.setLayout(self._main_layout)
+
+    def get(self) -> tuple[tuple[int, str], ...]:
+        return tuple(widget.value() for widget in self._widgets)
+
+    def insert_data(self, input_: tuple[tuple[int, str], ...]):
+        for num, widget in enumerate(self._widgets):
+            widget.insert(input_[num][0], input_[num][1])
+
+    def clear_widget(self):
+        for widget in self._widgets:
+            widget.clear()

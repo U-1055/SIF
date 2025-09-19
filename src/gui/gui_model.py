@@ -133,3 +133,28 @@ class Saver(Model):
                 info_data[self._last_style] = style_name
             return style
 
+
+if __name__ == '__main__':
+    from PySide6.QtWidgets import QMainWindow, QApplication
+
+    from interfaces import config
+    from tests.common_tests.save_load_test import ModelTest
+    from gui_presenter import LogicManager
+    from gui import init_view
+    import gui_const as const
+
+    cases_path = Path('..', '..', 'data', 'test_data', 'cases', 'model_cases')
+    root = ModelTest(cases_path)
+    path = Path('..', '..', 'data')
+
+    model = Saver(path, config, 'filters', 'actions', const.styles)
+
+    presenter = LogicManager({}, const.styles, const.Elements, const.labels, const.tooltips, model, root)
+    root.set_presenter(presenter)
+
+    test_config = root.get_test_case(0)
+    root.insert_config(test_config)
+
+    root_config = root.get_config()
+    root.check_config(0, root_config)
+

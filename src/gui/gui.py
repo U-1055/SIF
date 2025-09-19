@@ -38,7 +38,8 @@ def init_view(view: QMainWindow):
 
     view.show()
 
-def launch(model, view, presenter):
+
+def launch(model, view, presenter, path_: pathlib.Path):
     """
     Точка входа в программу.
     :param model: класс Модели.
@@ -50,14 +51,14 @@ def launch(model, view, presenter):
     app = QApplication()
     root = view()
     init_view(root)
-    path = pathlib.Path('..', '..', 'data')
+    path = path_
 
     icon = QIcon(r"C:\Users\filat\PycharmProjects\NNFCV\data\gui_data\icons\logo.ico")
     app.setWindowIcon(icon)
     root.setWindowIcon(icon)
 
     model = model(path, config, 'filters', 'actions', const.styles)
-    presenter = presenter({}, const.styles, model, root)
+    presenter = presenter({}, const.styles, const.Elements, const.labels, const.tooltips, model, root)
     root.set_presenter(presenter)
 
     app.exec()
@@ -65,7 +66,7 @@ def launch(model, view, presenter):
 
 if __name__ == '__main__':
     try:
-        launch(Saver, MainWindow, LogicManager)
+        launch(Saver, MainWindow, LogicManager, pathlib.Path('..', '..', 'data'))
     except SystemExit:
         raise
     except:

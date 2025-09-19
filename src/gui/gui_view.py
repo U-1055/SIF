@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QPushButton, QVBoxLayout, QF
 from PySide6.QtGui import Qt
 import typing as tp
 
-from interfaces import Presenter, View, ViewConfigStruct
+from interfaces import Presenter, View
 import gui_widgets as inp
 
 Align = Qt.AlignmentFlag
@@ -92,8 +92,11 @@ class MainWindow(QMainWindow, View):
     def add_wdg_many_fields(self, key: str, label: str, field: str, fields: int, min_: int, max_: int, alignment: Align, tooltip: str | None = None):
         self._add_widget(key, inp.QInpIntFields(fields, min_, max_), label, field, alignment, tooltip)
 
+    def add_wdg_resolution_edit(self, key: str, label: str, field: str, min_: int, max_: int, alignment: tp.Any, tooltip: str | None = None):
+        self._add_widget(key, inp.QInpResolutionEdit(min_, max_), label, field, alignment, tooltip)
+
     def add_memory_counter(self, key: str, label: str, field: str, alignment: Align, tooltip: str | None = None):
-        self._add_widget(key, inp.QInpMemoryEditComboBox(), label, field, alignment, tooltip)
+        self._add_widget(key, inp.QInpWeightEdit(), label, field, alignment, tooltip)
 
     def add_line_edit(self, key: str, label: str, field: str, alignment: Align, tooltip: str | None = None):
         self._add_widget(key, inp.QInpLineEdit(), label, field, alignment, tooltip)

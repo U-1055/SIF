@@ -1,6 +1,7 @@
+import enum
 import pathlib
 from abc import abstractmethod, abstractproperty
-from gui_widgets import InputWidget
+
 import typing as tp
 
 Filter = dict[
@@ -16,13 +17,6 @@ ConfigStruct = dict[str, str |  # main dict
                         ]
                    ]
 
-ViewConfigStruct = dict[str, InputWidget |  # main dict
-                        list[  # filters
-                         dict[str, InputWidget |  # filter
-                              dict[str, InputWidget]  # actions
-                             ]
-                           ]
-                       ]
 
 config = {
                    'input_dir': '', 'total_images': '', 'threads': 1,
@@ -107,6 +101,10 @@ class View:
 
     @abstractmethod
     def add_wdg_many_fields(self, key: str, label: str, field: str, fields: int, min_: int, max_: int, alignment: tp.Any, tooltip: str | None = None):
+        pass
+
+    @abstractmethod
+    def add_wdg_resolution_edit(self, key: str, label: str, field: str, min_: int, max_: int, alignment: tp.Any, tooltip: str | None = None):
         pass
 
     @abstractmethod
@@ -286,7 +284,15 @@ class Model:
 
 
 class Presenter:
-    def __init__(self, validation_params: dict, styles_table: tuple, model=None, view=None):
+    def __init__(self, validation_params: dict, styles_table: tuple, elements: enum.Enum, model=None, view=None):
+        """
+        Initialize an instance of the class.
+        :param validation_params: the parameters that will use for validation.
+        :param styles_table: the dict with keys that means style's name and values that means a QSS-file that contains this style.
+        :param elements:
+        :param model:
+        :param view:
+        """
         self._model: Model = model
         self._view: View = view
         self._config_struct: ConfigStruct = config
@@ -315,3 +321,18 @@ class Presenter:
     @abstractmethod
     def change_filters(self, filter_num: int):
         pass
+
+
+if __name__ == '__main__':
+    from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
+
+    app = QApplication()
+
+    root = QMainWindow()
+    wdg = QWidget()
+
+    root.setCentralWidget(wdg)
+    root.setMinimumSize(150, 150)
+    root.show()
+
+    app.exec()
