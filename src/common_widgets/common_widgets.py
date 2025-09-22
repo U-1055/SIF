@@ -3,6 +3,7 @@ from PySide6.QtGui import QValidator, Qt
 from PySide6.QtCore import QObject
 
 import typing as tp
+from abc import abstractmethod
 
 Align = Qt.AlignmentFlag
 
@@ -66,6 +67,10 @@ class QManyField(QWidget):
     def setValidator(self, widget_idx: int, validator: QValidator):
         self._check_idx(widget_idx)
         self._widgets[widget_idx].setValidator(validator)
+
+    @property
+    def fields(self) -> int:
+        return len(self._widgets)
 
     @property
     def widgets(self) -> list[QLineEdit]:
@@ -147,7 +152,7 @@ class QPathEdit(QWidget):
             self._main_edit.setText(path.path())
 
     def insert(self, text: str):
-        self._main_edit.insert(text)
+        self._main_edit.insert(text[1:])
 
     def clear(self):
         self._main_edit.clear()
@@ -156,7 +161,89 @@ class QPathEdit(QWidget):
         return self._main_edit.text()
 
 
-class QLineEditComboBox(QWidget):
+class QBaseWidgetComboBox(QWidget):
+    """
+        The QComboBox and QWidget what supporting user's input. You can get tuple of the QLineEdit's value and the
+        QComboBox's value.
+
+        :param field: subclass of QWidget. It using as a field.
+        :param values: values for QComboBox.
+        """
+
+    def __init__(self, field: QWidget = None, values: tp.Sequence[str] = ()):
+        super().__init__()
+        if field is None:
+            self._field = QSpinBox()
+        else:
+            self._field = field
+        self._values = values
+        self._place_widgets()
+
+    def _place_widgets(self):
+        self._main_layout = QHBoxLayout()
+        self._combobox = QComboBox()
+        self._combobox.addItems(self._values)
+
+        self._main_layout.addWidget(self._field)
+        self._main_layout.addWidget(self._combobox)
+
+        self.setLayout(self._main_layout)
+
+    @abstractmethod
+    def value(self) -> tuple[tp.Any, str]:
+        pass
+
+    @abstractmethod
+    def insert(self, text: tp.Any, value: str):
+        pass
+
+    @abstractmethod
+    def clear(self):
+        pass
+
+
+class QSpinboxComboBox(QBaseWidgetComboBox):
+
+    def __init__(self, field: QSpinBox = None, values: tp.Sequence[str] = ()):
+        super().__init__(field, values)
+        self._field: QSpinBox = self._field
+
+    def value(self) -> tuple[int, str]:
+        return self._field.value(), self._combobox.currentText()
+
+    def insert(self, spinbox_value: int, value: str):
+        if value not in self._values:
+            raise ValueError(f'Unknown value {value}. Value must be contained in values of this widget.')
+        self._field.setValue(spinbox_value)
+        self._combobox.setCurrentText(value)
+
+    def clear(self):
+        self._field.setValue(0)
+        self._combobox.setCurrentText(self._combobox.itemText(0))
+
+
+class QWidgetComboBoxComboBox(QBaseWidgetComboBox):
+
+    def __init__(self, field: QBaseWidgetComboBox = None, values: tp.Sequence[str] = ()):
+        super().__init__(field, values)
+        self._field: QBaseWidgetComboBox = self._field
+
+    def value(self) -> tuple[tuple[tp.Any, str], str]:
+        return self._field.value(), self._combobox.currentText()
+
+    def insert(self, value: tuple[tp.Any, str], text: str):
+        if text not in self._values:
+            raise ValueError(f'Unknown value {text}. Value must be contained in values of this widget.')
+        self._field.insert(*value)
+        self._combobox.setCurrentText(text)
+
+    def clear(self):
+        if len(self._values) > 0:
+            self._field.clear()
+            self._combobox.setCurrentIndex(0)
+
+
+class QLineEditComboBox(QBaseWidgetComboBox):
     """
     The QComboBox and QWidget what supporting user's input. You can get tuple of the QLineEdit's value and the
     QComboBox's value.
@@ -165,16 +252,13 @@ class QLineEditComboBox(QWidget):
     :param values: values for QComboBox.
     """
 
-    def __init__(self, field=QSpinBox, values: tp.Sequence[str] = ()):
-        super().__init__()
-        self._values = values
-        self._field = field
-        self._place_widgets()
+    def __init__(self, field: QSpinBox = QSpinBox, values: tp.Sequence[str] = ()):
+        super().__init__(field, values)
 
     def _place_widgets(self):
         main_layout = QHBoxLayout()
 
-        self._wdg_edit = self._field()
+        self._wdg_edit = self._field
         self._wdg_combobox = QComboBox()
         self._wdg_combobox.addItems(self._values)
 
@@ -183,7 +267,7 @@ class QLineEditComboBox(QWidget):
 
         self.setLayout(main_layout)
 
-    def value(self):
+    def value(self) -> tuple[tp.Any, str]:
         return self._wdg_edit.text(), self._wdg_combobox.currentText()
 
     @property
@@ -202,3 +286,15 @@ class QLineEditComboBox(QWidget):
         self._wdg_edit.clear()
 
 
+if __name__ == '__main__':
+    from PySide6.QtWidgets import QApplication, QMainWindow
+    app = QApplication()
+
+    root = QMainWindow()
+    wdg = QWidget()
+
+    root.setCentralWidget(wdg)
+    root.setMinimumSize(150, 150)
+    root.show()
+
+    app.exec()

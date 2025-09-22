@@ -5,7 +5,7 @@ import time
 
 import filetype
 from PIL import Image
-from main import define_image
+from src.nnfcv.main import define_image
 import re
 from threading import Thread
 from concurrent.futures import ProcessPoolExecutor

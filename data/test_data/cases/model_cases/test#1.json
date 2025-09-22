@@ -1,0 +1,29 @@
+{
+  "test_num" : 1,
+  "test_content": {
+                   "input_dir": "sth", "total_images": "total_images", "threads": 1,
+                   "filters":
+                         [
+                          {
+                            "format": "format",
+                            "size": [[100, "<"], [100, "<"]],
+                            "weight": [[100, "Б"], "<"],
+                            "name": "name",
+                            "extension": "extension",
+                            "number_multiplicity": "number_mult",
+                            "content": "content",
+                            "prepared": "prepared",
+                            "actions":
+                                {
+                                 "resize": "resize",
+                                 "crop": "crop",
+                                 "reformat": "reformat",
+                                 "rename": "rename",
+                                 "save": true,
+                                 "delete": false,
+                                 "output_dir": "output_dir"
+                                }
+                          }
+                         ]
+}
+}

@@ -37,7 +37,7 @@ class InputWidget:
         :param dict_: словарь
         :param key: ключ, значение которого должно быть в виджете
         """
-
+        
 
 class QInpLineEdit(InputWidget, QLineEdit):
 

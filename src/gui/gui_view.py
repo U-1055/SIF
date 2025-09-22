@@ -144,6 +144,7 @@ class MainWindow(QMainWindow, View):
         combobox: QComboBox = self._wdg_data[key]
         if insert not in tuple(combobox.itemText(idx) for idx in range(combobox.count())):
             combobox.addItem(insert)
+            combobox.setCurrentIndex(combobox.count() - 1)
 
     @tp.overload
     def insert(self, widget: str, input_: str): pass

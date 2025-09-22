@@ -287,11 +287,12 @@ class Presenter:
     def __init__(self, validation_params: dict, styles_table: tuple, elements: enum.Enum, model=None, view=None):
         """
         Initialize an instance of the class.
+
         :param validation_params: the parameters that will use for validation.
         :param styles_table: the dict with keys that means style's name and values that means a QSS-file that contains this style.
-        :param elements:
-        :param model:
-        :param view:
+        :param elements: elements of the GUI.
+        :param model: Model's instance.
+        :param view: View's instance.
         """
         self._model: Model = model
         self._view: View = view

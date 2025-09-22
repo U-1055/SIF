@@ -55,3 +55,7 @@ class ModelTest(BaseTest, View):
     def root_field(self):
         """Return the name of the root field ("main_field" default)."""
         return self.MAIN
+
+
+if __name__ == '__main__':
+    print('sth')

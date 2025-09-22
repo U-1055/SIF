@@ -2,6 +2,7 @@ import enum
 
 from interfaces import Presenter, ConfigStruct, config, Model, View
 import gui_const as const
+from src.nnfcv.program_logic import Preparer
 
 
 class LogicManager(Presenter):
@@ -20,7 +21,7 @@ class LogicManager(Presenter):
                  elements: const.Elements,
                  labels: dict,
                  tooltips: dict,
-                 model = None, view = None):
+                 model: Model = None, view: View = None):
         super().__init__(validation_params, model, view)
         if model:
             self._model = model
@@ -45,6 +46,7 @@ class LogicManager(Presenter):
         self._update_config(self._config_struct)
 
     def _update_configs_data(self):
+        """Обновляет данные о конфиге"""
         self._init_data = self._model.get_config_data()
         self._configs: list = self._init_data[self._els.CONFIGS_LIST]
         self._filters_num: int = self._init_data[self._els.FILTERS]
@@ -53,6 +55,7 @@ class LogicManager(Presenter):
             self._config_struct = config
 
     def _config_view(self):
+        """Устанавливает компоновку интерфейса"""
 
         align_right = self._view.alignment_right
         align_left = self._view.alignment_left
@@ -70,9 +73,9 @@ class LogicManager(Presenter):
         self._view.add_field(self._els.THEME_CHANGE_FIELD, '', self._els.TOOLS_FIELD, 'v')
 
         self._view.add_control_btn(self._els.BTN_LIGHT_THEME, self.labels.get(self._els.BTN_LIGHT_THEME), self._els.THEME_CHANGE_FIELD,
-                                   lambda: self._change_theme(self.STYLE_LIGHT, light_style))
+                                   lambda: self._change_theme(self.STYLE_LIGHT, light_style), align_left)
         self._view.add_control_btn(self._els.BTN_DARK_THEME, self.labels.get(self._els.BTN_DARK_THEME), self._els.THEME_CHANGE_FIELD,
-                                   lambda: self._change_theme(self.STYLE_DARK, dark_style))
+                                   lambda: self._change_theme(self.STYLE_DARK, dark_style), align_left)
         self._view.apply_style(self._els.BTN_LIGHT_THEME, light_style)
         self._view.apply_style(self._els.BTN_DARK_THEME, dark_style)
 
@@ -129,25 +132,49 @@ class LogicManager(Presenter):
                 config_[wdg_key] = self._get_view_data(config_[wdg_key])
             elif wdg_key in self.fields:
                 data = self._view.get(wdg_key)
-                if wdg_key == self._els.SIZE:
-                    print('')
                 if data is not None:
                     config_[wdg_key] = data
 
         return config_
 
+    def _prepare_params(self, config_: ConfigStruct):
+        """Приводит параметры к состоянию, требуемому обработчиком."""
+        config_[self._els.TOTAL_IMAGES] = (0, int(config_[self._els.TOTAL_IMAGES]))
+        config_[self._els.THREADS] = int(config_[self._els.THREADS])
+
+        filters = config_[self._els.FILTERS]
+
+        for param in config_[self._els.FILTERS]:
+            match param:
+                case self._els.SIZE:
+                    for dim in filters[self._els.SIZE]:
+                        dim[0] = int(dim[0])
+                    filters[self._els.SIZE] = (filters[self._els.SIZE], )
+
+                case self._els.WEIGHT:
+                    filters[self._els.WEIGHT][0] = int(filters[self._els.WEIGHT][0])
+
+                case self._els.NUMBER_MULTIPLICITY:
+                    filters[self._els.NUMBER_MULTIPLICITY] = (int(filters[self._els.NUMBER_MULTIPLICITY][0]), )
+
     def prepare_data(self):
         """Обрабатывает данные от View."""
+        view_data = self._get_view_data(self._config_struct)
+
         self._config_struct = self._get_view_data(self._config_struct)
 
         error_widgets: tuple = self._validate()
         if error_widgets:
             self._view.show_errors(error_widgets)
+            return
 
+        self._model.save_config(self._config_name, self._filters_now, config)
+        Preparer([self._config_struct])
         print('The data was prepared')
 
     def change_filters(self, filters_num: int):
-        # ToDo: внимание! предполагается что конфиг уже отвалидирован (валидируется после каждого завершения редактирования поля)
+        # предполагается что конфиг уже отвалидирован
+        # (валидируется после каждого завершения редактирования поля)
         print(f'Filters: {self._filters_num}, Filter: {filters_num}')
 
         self._model.save_config(self._config_name, self._filters_now, self._config_struct)
