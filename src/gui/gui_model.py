@@ -54,7 +54,7 @@ class Saver(Model):
             else:
                 return list(configs.keys())[0]
 
-    def _get_full_config(self, config_name: str) -> ConfigStruct:
+    def get_full_config(self, config_name: str) -> ConfigStruct:
         with shv.open(str(self._configs_path)) as configs:
             if config_name in configs:
                 return configs[config_name]
@@ -76,13 +76,13 @@ class Saver(Model):
 
     def get_config(self, config_name: str, filter_num: int) -> ConfigStruct:
         """Returns the config by given name with filter by given number."""
-        config = self._get_full_config(config_name)
+        config = self.get_full_config(config_name)
         config[self._filters] = [config[self._filters][filter_num]]
         return config
 
     def save_config(self, config_name: str, filter_num: int, config: ConfigStruct):
         """Сохраняет конфиг под заданным именем."""
-        full_config = self._get_full_config(config_name)
+        full_config = self.get_full_config(config_name)
         full_config[self._filters][filter_num] = config[self._filters][0]
 
         for key in full_config:
@@ -103,6 +103,18 @@ class Saver(Model):
 
         with shv.open(str(self._configs_path), 'w') as configs:
             configs[config_name] = config
+
+    def del_config(self, config_name: str):
+        with shv.open(str(self._configs_path), 'w') as configs:
+            configs.pop(config_name)
+
+        with open(self._info_path) as info:
+            info_data = json.load(info)
+        if info_data[self._last_config] == config_name:
+            info_data[self._last_config] = ''
+
+        with open(self._info_path, 'w') as info:
+            json.dump(info_data, info)
 
     def get_config_data(self):
         with shv.open(str(self._configs_path), 'r') as configs:

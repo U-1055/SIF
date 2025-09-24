@@ -72,7 +72,7 @@ class Preparer:
                 processes = []
 
                 with ProcessPoolExecutor() as pool:
-                    chunks_size = 0 #Для тестирования
+                    chunks_size = 0  # Для тестирования
 
                     for i in range(parameters['threads']):
                         if i + 1 == parameters['threads']:
@@ -90,11 +90,11 @@ class Preparer:
                     for process in processes:
                         self.send_message(process.result())
 
-             #   check_chunks(parameters['input_dir'], chunks_size)
+             # check_chunks(parameters['input_dir'], chunks_size)
             else:
                 self.send_message('Инициализация обработки...')
                 before = datetime.datetime.now()
-                thread = Thread(target=self.operation_cycle, args=((parameters, files, 0),)) #args дважды оборачивается в tuple по указанной в начале operation_cycle причине
+                thread = Thread(target=self.operation_cycle, args=((parameters, files, 0),))  # args дважды оборачивается в tuple по указанной в начале operation_cycle причине
                 thread.start()
                 thread.join()
 
@@ -359,7 +359,7 @@ if __name__ == '__main__':
                             'name': (('s*sss', True),),
                             'extension': 'jpeg',
                             'number_multiplicity': (1, 2, 3, 4, 5),
-                            'content': 'I',
+                            'content': '12',
                             'prepared': '',
                             'actions':  # -----------------------------------------------------------------------------------
                                 {'resize': (110, 100),

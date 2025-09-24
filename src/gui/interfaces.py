@@ -146,6 +146,10 @@ class View:
         pass
 
     @abstractmethod
+    def show_control_dialog_window(self, title: str, message: str = None, command: tp.Callable = None):
+        pass
+
+    @abstractmethod
     def insert_control_combobox(self, key: str, insert: str):
         pass
 
@@ -231,6 +235,10 @@ class Model:
         return self._config_name
 
     @abstractmethod
+    def get_full_config(self, config_name: str):
+        pass
+
+    @abstractmethod
     def get_config(self, config_name: str, filter_num: int) -> ConfigStruct:
         """Возвращает конфиг по заданному имени, содержащий фильтр под заданным номером."""
 
@@ -244,6 +252,10 @@ class Model:
 
     @abstractmethod
     def add_filters(self, config_name: str):
+        pass
+
+    @abstractmethod
+    def del_config(self, config_name: str):
         pass
 
     @abstractmethod

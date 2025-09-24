@@ -34,6 +34,7 @@ validation_rules = {
                          ]
 }
 
+
 class Elements:
     """Класс, содержащий названия элементов интерфейса"""
     MAIN_FIELD = 'main_field'
@@ -73,7 +74,8 @@ class Elements:
     BTN_SAVE = 'btn_save'
     BTN_ADD_CONF = 'btn_add_conf'
     BTN_ADD_FILTERS = 'btn_add_filters'
-    BTN_DELETE = 'btn_delete'
+    BTN_DEL_CONF = 'btn_del_conf'
+    BTN_DEL_FILTERS = 'btn_del_filters'
     BTN_LIGHT_THEME = 'btn_light_theme'
     BTN_DARK_THEME = 'btn_dark_theme'
     TEXT_SHOWER = 'text_shower'
@@ -107,7 +109,7 @@ labels = {
     Elements.ACTIONS: 'Действия',
     Elements.INPUT_DIR: 'Целевая папка',
     Elements.TOTAL_IMAGES: 'Проверить изображений',
-    Elements.THREADS: 'Потоки',
+    Elements.THREADS: 'Процессы',
     Elements.FORMAT: 'Формат',
     Elements.SIZE: 'Размер изображения',
     Elements.NAME: 'Имя файла',
@@ -128,6 +130,8 @@ labels = {
     Elements.BTN_SAVE: 'Сохранить конфиг',
     Elements.BTN_DARK_THEME: 'Темная тема',
     Elements.BTN_LIGHT_THEME: 'Светлая тема',
+    Elements.BTN_DEL_CONF: 'Удалить конфиг',
+    Elements.BTN_DEL_FILTERS: 'Удалить настройки',
     Elements.BTN_ADD_FILTERS: 'Добавить настройки',
     Elements.BTN_ADD_CONF: 'Добавить конфиг'
 }
@@ -137,7 +141,7 @@ tooltips = {
     Elements.ACTIONS: 'Действия',
     Elements.INPUT_DIR: 'Целевая папка',
     Elements.TOTAL_IMAGES: 'Проверить изображений',
-    Elements.THREADS: 'Потоки',
+    Elements.THREADS: 'Число процессов, которые будут задействованы при обработке',
     Elements.FORMAT: 'Формат',
     Elements.SIZE: 'Размер изображения',
     Elements.NAME: 'Имя файла',

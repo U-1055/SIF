@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QPushButton, QVBoxLayout, QFormLayout, QComboBox, QLayout, QInputDialog, QHBoxLayout, QTextEdit, QLabel, QFrame
+from PySide6.QtWidgets import (QMainWindow, QWidget, QPushButton, QVBoxLayout, QFormLayout, QComboBox, QLayout, QInputDialog,
+                               QHBoxLayout, QTextEdit, QLabel, QFrame, QDialog)
 from PySide6.QtGui import Qt
 import typing as tp
 
@@ -134,6 +135,14 @@ class MainWindow(QMainWindow, View):
         if message is None:
             message = ''
         return win_dialog.getText(frm_temp, title, message)[0]
+
+    def show_control_dialog_window(self, title: str, message: str = None, command: tp.Callable = None):
+        win_dialog = QDialog()
+        win_dialog.setWindowTitle(title)
+
+        win_dialog.show()
+        if command:
+            win_dialog.accepted.connect(command)
 
     def add_label(self, key: str, text: str, field: str, alignment: Align):
         lbl = QLabel(text)

@@ -13,6 +13,8 @@ class LogicManager(Presenter):
         const.Elements.REFORMAT: ('Не учитывать', 'JPEG', 'PNG', 'BMP'),
     }
     ADD_CONF_TITLE = 'Новый конфиг'
+    DEL_CONF_TITLE = 'Удалить текущий конфиг?'
+    DEL_FILTERS_TITLE = 'Удалить текущие настройки?'
     fields = const.fields
 
     def __init__(self,
@@ -86,6 +88,14 @@ class LogicManager(Presenter):
         self._view.add_control_combobox(self._els.CONFIG_SWITCH, self._els.TOOLS_FIELD, self.change_config, self._configs, align_left,
                                         self.tooltips[self._els.CONFIG_SWITCH])
 
+        self._view.add_control_btn(self._els.BTN_DEL_CONF, self.labels.get(self._els.BTN_DEL_CONF),
+                                   self._els.TOOLS_FIELD, self.del_config, align_left,
+                                   self.tooltips.get(self._els.BTN_DEL_CONF))
+
+        self._view.add_control_btn(self._els.BTN_DEL_FILTERS, self.labels.get(self._els.BTN_DEL_FILTERS),
+                                   self._els.FILTERS_CONTROL_FIELD, self.del_filters, align_left,
+                                   self.tooltips.get(self._els.BTN_DEL_FILTERS))
+
         self._view.add_label('settings_lbl', 'Текущие настройки:', self._els.FILTERS_CONTROL_FIELD, align_left)
         self._view.add_control_combobox(self._els.FILTERS_SWITCH, self._els.FILTERS_CONTROL_FIELD, self.change_filters,
                                         [str(num) for num in range(self._filters_num)], align_left, self.tooltips.get(self._els.FILTERS_SWITCH))
@@ -137,14 +147,11 @@ class LogicManager(Presenter):
 
         return config_
 
-    def _prepare_params(self, config_: ConfigStruct):
-        """Приводит параметры к состоянию, требуемому обработчиком."""
-        config_[self._els.TOTAL_IMAGES] = (0, int(config_[self._els.TOTAL_IMAGES]))
-        config_[self._els.THREADS] = int(config_[self._els.THREADS])
+    def _prepare_filters(self, filters: dict) -> dict:
+        for param in filters:
+            if filters[param] == '':
+                continue
 
-        filters = config_[self._els.FILTERS]
-
-        for param in config_[self._els.FILTERS]:
             match param:
                 case self._els.SIZE:
                     for dim in filters[self._els.SIZE]:
@@ -156,25 +163,71 @@ class LogicManager(Presenter):
 
                 case self._els.NUMBER_MULTIPLICITY:
                     filters[self._els.NUMBER_MULTIPLICITY] = (int(filters[self._els.NUMBER_MULTIPLICITY][0]), )
+               # ToDo: обработать параметр "Не учитывать"
+
+        return filters
+
+    def _prepare_actions(self, actions: dict) -> dict:
+        for param in actions:
+            if actions[param] == '':
+                continue
+
+            match param:
+                case self._els.CROP:
+                    for i, num in enumerate(actions[param]):
+                        actions[param][i] = int(num)
+                case self._els.RESIZE:
+                    for i, num in enumerate(actions[param]):
+                        actions[param][i] = int(num)
+
+        return actions
+
+    def _prepare_params(self, config_: ConfigStruct):
+        """Приводит параметры к состоянию, требуемому обработчиком."""
+        if config_[self._els.TOTAL_IMAGES] != '':
+            config_[self._els.TOTAL_IMAGES] = (0, int(config_[self._els.TOTAL_IMAGES]))
+        if config_[self._els.THREADS] != '':
+            config_[self._els.THREADS] = int(config_[self._els.THREADS])
+
+        filters = config_[self._els.FILTERS]
+
+        for i, filter_ in enumerate(filters):
+            actions = filter_[self._els.ACTIONS]
+            filters[i] = self._prepare_filters(filter_)
+            filter_[self._els.ACTIONS] = self._prepare_actions(actions)
+
+
+    def _validate(self) -> tuple:
+        """Выполняет валидацию."""
+        if self._config_struct[self._els.INPUT_DIR] == '':
+            return (self._els.INPUT_DIR, )
+
+    def _show_errors(self, widgets: tuple[str]):
+        error_style = self._model.get_style(self.STYLE_ERR)
+        for widget in widgets:
+            self._view.apply_style(widget, error_style)
+
+    def _reset_style(self):
+        style = self._model.get_style(self._current_style)
+        self._view.apply_main_style(style)
 
     def prepare_data(self):
         """Обрабатывает данные от View."""
+
         view_data = self._get_view_data(self._config_struct)
-
-        self._config_struct = self._get_view_data(self._config_struct)
-
         error_widgets: tuple = self._validate()
+
         if error_widgets:
-            self._view.show_errors(error_widgets)
+            self._show_errors(error_widgets)
             return
 
         self._model.save_config(self._config_name, self._filters_now, config)
-        Preparer([self._config_struct])
-        print('The data was prepared')
+        config_ = self._prepare_params(self._model.get_full_config(self._config_name))
+
+        Preparer([config_])
 
     def change_filters(self, filters_num: int):
-        # предполагается что конфиг уже отвалидирован
-        # (валидируется после каждого завершения редактирования поля)
+
         print(f'Filters: {self._filters_num}, Filter: {filters_num}')
 
         self._model.save_config(self._config_name, self._filters_now, self._config_struct)
@@ -185,6 +238,7 @@ class LogicManager(Presenter):
         self._view.insert_control_combobox(self._els.FILTERS_SWITCH, str(filters_num))
 
     def change_config(self, num: int):
+        self.save_config()
 
         self._config_name = self._configs[num]
         config_ = self._model.get_config(self._config_name, self._filters_now)
@@ -213,6 +267,16 @@ class LogicManager(Presenter):
         self._update_configs_data()
         self._view.insert_control_combobox(self._els.FILTERS_SWITCH, str(self._filters_num - 1))
 
+    def del_config(self):
+        if len(self._configs) > 1:
+            self._view.show_control_dialog_window(self.DEL_CONF_TITLE)
+            self._model.del_config(self._config_name)
+            self._update_configs_data()
+            self.change_config(-1)
+
+    def del_filters(self):
+        pass
+
     def _update_config(self, config_: dict):
         for wdg_key in config_:
 
@@ -232,10 +296,6 @@ class LogicManager(Presenter):
     @property
     def init_data(self) -> dict:
         return self._init_data
-
-    def _validate(self) -> tuple:
-        """Выполняет валидацию."""
-        pass
 
     def _get_filters(self, num: int):
         pass
